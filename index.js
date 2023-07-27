@@ -156,10 +156,10 @@ async function prev(gqueue, cguild, cchan) {
 }
 
 var dbConfig = {
-    host: "54.37.204.19",
-    user: "u102131_BOQhyqEfbr",
-    password: "ybxd!A.ixt.YJjWWdXpvvID8",
-    database: "s102131_smobotchardb",
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_TABLE,
 };
 
 async function stop(gqueue, cguild) {
