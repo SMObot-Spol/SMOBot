@@ -73,7 +73,7 @@ class Song {
     }
 }
 
-let tanks = ["1-Protection", "6-Blood", "2-Protection", "11-Feral Combat"];
+let tanks = ["1-Protection", "6-Blood", "2-Protection", "11-Feral Combat",'10-Brewmaster'];
 let rdps = [
     "3-Survival",
     "3-Markmanship",
@@ -98,6 +98,7 @@ let mdps = [
     "6-Unholy",
     "6-Frost",
     "7-Enhancement",
+    '10-Windwalker',
     "11-Feral Combat",
 ];
 let heals = [
@@ -105,6 +106,7 @@ let heals = [
     "5-Discipline",
     "5-Holy",
     "7-Restoration",
+    '10-Mistweaver',
     "11-Restoration",
 ];
 
@@ -118,7 +120,7 @@ let classes = [
     ["Shaman", "<:shaman:938287642980806668>"],
     ["Mage", "<:mages:938287643265990748>"],
     ["Warlock", "<:warlock:938287643324743752>"],
-    ["NOTHING", "NOTHING"],
+    ["Monk", "<:Monk:1177365333611397180>"],
     ["Druid", "<:druid:938287643110809601>"],
 ];
 
@@ -686,6 +688,7 @@ classIdMap.set(6, "DK");
 classIdMap.set(7, "SHAM");
 classIdMap.set(8, "MAGE");
 classIdMap.set(9, "LOCK");
+classIdMap.set(10, "MONK");
 classIdMap.set(11, "DRUID");
 
 function getClassById(id) {
@@ -984,7 +987,7 @@ async function getID(chars, raidString, idBed, freeOnly) {
             await delay(10000);
         }
         requestNumber++;
-        let charUrl = `https://cata-twinhead.twinstar.cz/?character=${char.name}&realm=Apollo`;
+        let charUrl = `https://mop-twinhead.twinstar.cz/?character=${char.name}&realm=Helios`;
         endpoints.push(aGet(charUrl));
     }
 
@@ -1006,8 +1009,8 @@ async function getID(chars, raidString, idBed, freeOnly) {
                 let classicon;
 
                 cName = chars[index].name;
-                let charUrl = `https://cata-twinhead.twinstar.cz/?character=${cName}&realm=Apollo`;
-                let armoryUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${cName}&realm=Apollo`;
+                let charUrl = `https://mop-twinhead.twinstar.cz/?character=${cName}&realm=Helios`;
+                let armoryUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${cName}&realm=Helios`;
                 ilvl = chars[index].ilvl;
                 classid = chars[index].classid;
                 length = chars.length - 1;
@@ -1333,8 +1336,9 @@ async function getCharsByIdAndClassAndRole(id, role, classa) {
 async function findChar(id, char) {
     let query = `SELECT * FROM \`toons\` WHERE \`character\` = '${char}' AND \`discordid\` = '${id}'`;
     try {
-        const { rows } = await execute(query);
-        if (rows.length === 0) {
+        const x = await execute(query);
+        console.log('DATABASE FINDCHAR THINGI',x);
+        if (x.length === 0) {
             return false;
         } else {
             return true;
@@ -1351,11 +1355,11 @@ async function getIlvl(char) {
 
     if (Array.isArray(char)) {
         char.forEach((charName) => {
-            let charUrl = `https://cata-twinhead.twinstar.cz/?character=${charName}&realm=Apollo`;
+            let charUrl = `https://mop-twinhead.twinstar.cz/?character=${charName}&realm=Helios`;
             endpoints.push(aGet(charUrl));
         });
     } else {
-        let charUrl = `https://cata-twinhead.twinstar.cz/?character=${char}&realm=Apollo`;
+        let charUrl = `https://mop-twinhead.twinstar.cz/?character=${char}&realm=Helios`;
         endpoints.push(aGet(charUrl));
         cName = char;
     }
@@ -1400,7 +1404,7 @@ async function getIlvl(char) {
 }
 
 async function getCharClass(char) {
-    let toonUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${char}&realm=Apollo`;
+    let toonUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${char}&realm=Helios`;
     let classID;
     let classSpec1;
     let classSpec2;
@@ -1719,11 +1723,9 @@ bot.on("ready", async () => {
                     .setName("raid")
                     .setDescription("the raid you are assembling")
                     .setRequired(true)
-                    .addChoice("Dragon Soul", "DS")
-                    .addChoice("Firelands", "FL")
-                    .addChoice("Bastion of Twilight", "BOT")
-                    .addChoice("Blackwing Descent", "BWD")
-                    .addChoice("Throne of the Four Winds", "T4W")
+                    .addChoice("Terrace of Endless Spring", "TOES")
+                    .addChoice("Heart of Fear", "HOF")
+                    .addChoice("Mogu'shan Vaults", "MSV")
             )
             .addStringOption((option) =>
                 option
@@ -1861,8 +1863,9 @@ bot.on("ready", async () => {
                             .setDescription(
                                 "the raid you want lockout status for"
                             )
-                            .addChoice("Dragon Soul", "ds")
-                            .addChoice("Firelands", "fl")
+                            .addChoice("Terrace of Endless Spring", "toes")
+                            .addChoice("Heart of Fear", "hof")
+                            .addChoice("Mogu'shan Vaults", "msv")
                             .setRequired(true)
                     )
                     .addStringOption((option) =>
@@ -1926,8 +1929,9 @@ bot.on("ready", async () => {
                             .setDescription(
                                 "the raid you want lockout status for"
                             )
-                            .addChoice("Dragon Soul", "ds")
-                            .addChoice("Firelands", "fl")
+                            .addChoice("Terrace of Endless Spring", "toes")
+                            .addChoice("Heart of Fear", "hof")
+                            .addChoice("Mogu'shan Vaults", "msv")
                             .setRequired(true)
                     )
                     .addStringOption((option) =>
@@ -2013,11 +2017,9 @@ bot.on("ready", async () => {
                     .setName("raid")
                     .setDescription("the raid you are assembling")
                     .setRequired(true)
-                    .addChoice("Dragon Soul", "DS")
-                    .addChoice("Firelands", "FL")
-                    .addChoice("Bastion of Twilight", "BOT")
-                    .addChoice("Blackwing Descent", "BWD")
-                    .addChoice("Throne of the Four Winds", "T4W")
+                    .addChoice("Terrace of Endless Spring", "TOES")
+                            .addChoice("Heart of Fear", "HOF")
+                            .addChoice("Mogu'shan Vaults", "MSV")
             )
             .addStringOption((option) =>
                 option
@@ -3303,14 +3305,18 @@ bot.on("interactionCreate", async (interaction) => {
             });
         }
 
-        if (options.getString("raid") == "ds") {
-            eRaid = "Dragon Soul";
-            eDesc += " Dragon Soul";
-            raidString = "ds-statistic',";
-        } else if (options.getString("raid") == "fl") {
-            eDesc += " Firelands";
-            raidString = "fl-statistic',";
-        }
+        if (options.getString("raid") == "msv") {
+            eRaid = "Mogu'shan Vaults";
+            eDesc += " Mogu'shan Vaults";
+            raidString = "msv-statistic',";
+        } else if (options.getString("raid") == "hof") {
+            eRaid = "Heart of Fear";
+            eDesc += "Heart of Fear";
+            raidString = "hof-statistic',";
+        } else if (options.getString("raid") == "toes") {
+            eRaid = "Terrace of Endless Spring";
+            eDesc += "Terrace of Endless Spring";
+            raidString = "toes-statistic',";
 
         if (options.getString("class")) {
             eClass = options.getString("class");
@@ -4301,26 +4307,18 @@ bot.on("interactionCreate", async (interaction) => {
     }
 
     if (commandName === "lfm") {
-        if (options.getString("raid").toLowerCase() == "ds") {
+        if (options.getString("raid").toLowerCase() == "toes") {
             raidImage =
-                "https://static.wikia.nocookie.net/wowpedia/images/4/49/Dragon_Soul_loading_screen.jpg";
-            raidName = "Dragon Soul";
-        } else if (options.getString("raid").toLowerCase() == "fl") {
+                "https://static.wikia.nocookie.net/wowpedia/images/7/7e/Terrace_of_Endless_Spring_loading_screen.jpg";
+            raidName = "Terrace of Endless Spring";
+        } else if (options.getString("raid").toLowerCase() == "hof") {
             raidImage =
-                "https://static.wikia.nocookie.net/wowpedia/images/4/4b/Firelands_loading_screen.jpg";
-            raidName = "Firelands";
-        } else if (options.getString("raid").toLowerCase() == "bot") {
+                "https://static.wikia.nocookie.net/wowpedia/images/0/0b/Heart_of_Fear_loading_screen.jpg";
+            raidName = "Heart of Fear";
+        } else if (options.getString("raid").toLowerCase() == "msv") {
             raidImage =
-                "https://static.wikia.nocookie.net/wowpedia/images/8/8c/Bastion_of_Twilight_loading_screen.jpg";
-            raidName = "Bastion of Twilight";
-        } else if (options.getString("raid").toLowerCase() == "bwd") {
-            raidImage =
-                "https://static.wikia.nocookie.net/wowwiki/images/e/e6/Blackwing_Descent_loading_screen.jpg";
-            raidName = "Blackwing Descent";
-        } else if (options.getString("raid").toLowerCase() == "t4w") {
-            raidImage =
-                "https://static.wikia.nocookie.net/wowwiki/images/3/33/Throne_of_the_Four_Winds_loading_screen.jpg";
-            raidName = "Throne of the Four Winds";
+                "https://static.wikia.nocookie.net/wowpedia/images/9/9a/Mogu%27shan_Vaults_loading_screen.jpg";
+            raidName = "Mogu'shan Vaults";
         }
 
         if (options.getString("size"))
