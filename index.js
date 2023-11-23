@@ -73,7 +73,13 @@ class Song {
     }
 }
 
-let tanks = ["1-Protection", "6-Blood", "2-Protection", "11-Feral Combat",'10-Brewmaster'];
+let tanks = [
+    "1-Protection",
+    "6-Blood",
+    "2-Protection",
+    "11-Feral Combat",
+    "10-Brewmaster",
+];
 let rdps = [
     "3-Survival",
     "3-Markmanship",
@@ -98,7 +104,7 @@ let mdps = [
     "6-Unholy",
     "6-Frost",
     "7-Enhancement",
-    '10-Windwalker',
+    "10-Windwalker",
     "11-Feral Combat",
 ];
 let heals = [
@@ -106,7 +112,7 @@ let heals = [
     "5-Discipline",
     "5-Holy",
     "7-Restoration",
-    '10-Mistweaver',
+    "10-Mistweaver",
     "11-Restoration",
 ];
 
@@ -1337,7 +1343,7 @@ async function findChar(id, char) {
     let query = `SELECT * FROM \`toons\` WHERE \`character\` = '${char}' AND \`discordid\` = '${id}'`;
     try {
         const x = await execute(query);
-        console.log('DATABASE FINDCHAR THINGI',x);
+        console.log("DATABASE FINDCHAR THINGI", x);
         if (x.length === 0) {
             return false;
         } else {
@@ -2018,8 +2024,8 @@ bot.on("ready", async () => {
                     .setDescription("the raid you are assembling")
                     .setRequired(true)
                     .addChoice("Terrace of Endless Spring", "TOES")
-                            .addChoice("Heart of Fear", "HOF")
-                            .addChoice("Mogu'shan Vaults", "MSV")
+                    .addChoice("Heart of Fear", "HOF")
+                    .addChoice("Mogu'shan Vaults", "MSV")
             )
             .addStringOption((option) =>
                 option
@@ -3317,6 +3323,7 @@ bot.on("interactionCreate", async (interaction) => {
             eRaid = "Terrace of Endless Spring";
             eDesc += "Terrace of Endless Spring";
             raidString = "toes-statistic',";
+        }
 
         if (options.getString("class")) {
             eClass = options.getString("class");
