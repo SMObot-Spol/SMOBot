@@ -779,8 +779,7 @@ async function updateCharacter(char, uid, addBed) {
             value: "\n**Postava**\n**odstránená**\n",
             inline: true,
         });
-        var queryString = `DELETE FROM toons 
-      WHERE character = '${char.toLowerCase()}' AND discordid = '${uid}'`;
+        var queryString = `DELETE FROM \`toons\` WHERE \`CHARACTER\` = '${char.toLowerCase()}' AND \`DISCORDID\` = '${uid}';`;
         await execute(queryString);
         return addBed;
     }
@@ -959,8 +958,7 @@ async function removeCharacter(char, uid) {
         return finalMessage;
     }
 
-    var queryString = `DELETE FROM toons
-  WHERE CHARACTER = '${char}' AND DISCORDID = '${uid}'`;
+    var queryString = `DELETE FROM \`toons\` WHERE \`CHARACTER\` = '${char.toLowerCase()}' AND \`DISCORDID\` = '${uid}';`;
 
     let exe = await execute(queryString);
 
