@@ -636,6 +636,7 @@ function raidRender(roleid) {
 
 async function execute(query) {
     let toons;
+    console.log(dbConfig);
     const client = mysql.createConnection(dbConfig);
     try {
         await new Promise((resolve, reject) => {
