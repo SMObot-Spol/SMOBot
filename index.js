@@ -426,7 +426,7 @@ let crossmoji;
 let checkmoji;
 let raidRoomId = [];
 let lfmModules = [];
-let testBed;
+let testBed = { fields: [] };
 let testguild;
 
 console.log("Bot Fired Up!");
