@@ -828,8 +828,8 @@ async function updateCharacter(char, uid, addBed) {
 
     let exe = await execute(queryString);
 
-    if (exe?.rows) {
-        exe.rows.forEach((row) => {
+    if (exe) {
+        exe.forEach((row) => {
             let charIndex = allChars.findIndex(
                 (char) => char.character == row.character
             );
@@ -927,8 +927,8 @@ async function addCharacter(char, uid, addBed) {
 
     let exe = await execute(queryString);
 
-    if (exe?.rows) {
-        exe.rows.forEach((row) => {
+    if (exe) {
+        exe.forEach((row) => {
             allChars.push(row);
         });
     }
@@ -1613,8 +1613,8 @@ bot.on("ready", async () => {
 
     let raidInfo = await execute(`SELECT * FROM raids`);
 
-    if (raidInfo.rows) {
-        raidInfo.rows.forEach((row) => {
+    if (raidInfo) {
+        raidInfo.forEach((row) => {
             allRaids.push(row);
         });
     }
