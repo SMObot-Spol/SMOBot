@@ -450,12 +450,7 @@ var task = cron.schedule(
     }
 );
 
-// let pool = new Pool({
-//     connectionString: process.env.DATABASE_URL,
-//     ssl: {
-//         rejectUnauthorized: false,
-//     },
-// });
+const client = mysql.createConnection(dbConfig);
 
 var allChars = [];
 var allRaids = [];
@@ -636,8 +631,6 @@ function raidRender(roleid) {
 
 async function execute(query) {
     let toons;
-    console.log(dbConfig);
-    const client = mysql.createConnection(dbConfig);
     try {
         await new Promise((resolve, reject) => {
             client.connect((err) => {
@@ -681,7 +674,6 @@ async function execute(query) {
     } catch (e) {
         console.error(e);
     }
-
     return toons;
 }
 
@@ -1809,6 +1801,12 @@ bot.on("ready", async () => {
                 option
                     .setName("character5")
                     .setDescription("the name of your character")
+                    .setRequired(false)
+            )
+            .addMentionableOption((option) =>
+                option
+                    .setName("userId")
+                    .setDescription("user that owns the character")
                     .setRequired(false)
             ),
         new SlashCommandBuilder()
@@ -3083,6 +3081,9 @@ bot.on("interactionCreate", async (interaction) => {
     }
 
     if (commandName === "addchar") {
+        if (options.getMentionable("userId")) {
+            log("userId");
+        }
         let user = interaction.user.id;
         let addBed = {
             title: "ADD Character",
