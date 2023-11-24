@@ -965,7 +965,9 @@ async function snapshotCreator(char, uid, snapBed) {
         return snapBed;
     }
 
-    var queryString = `UPDATE \`toons\` SET \`gear\`='${gear}' WHERE \`discordid\`='${uid}' AND \`character\`='${char}'`;
+    var queryString = `UPDATE \`toons\` SET \`gear\`='${JSON.stringify(
+        gear
+    )}' WHERE \`discordid\`='${uid}' AND \`character\`='${char}'`;
 
     let exe = await execute(queryString);
 
