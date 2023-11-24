@@ -3339,12 +3339,40 @@ bot.on("interactionCreate", async (interaction) => {
 
         const gear = JSON.parse(
             allChars.find((el) => el.character == char).gear
-        );
+        ).gear;
 
-        console.log(gear);
+        const palaBis = [
+            { slot: "0", id: 78693 },
+            { slot: "1", id: 77090 },
+            { slot: "2", id: 78465 },
+            { slot: "3", id: 0 },
+            { slot: "4", id: 78727 },
+            { slot: "5", id: 78416 },
+            { slot: "6", id: 78712 },
+            { slot: "7", id: 78389 },
+            { slot: "8", id: 78373 },
+            { slot: "9", id: 78675 },
+            { slot: "10", id: 71215 },
+            { slot: "11", id: 78432 },
+            { slot: "12", id: 77997 },
+            { slot: "13", id: 77992 },
+            { slot: "14", id: 77097 },
+            { slot: "15", id: 78478 },
+            { slot: "16", id: 0 },
+            { slot: "17", id: 0 },
+            { slot: "18", id: 69210 },
+        ];
+
+        let dif = [];
+
+        palaBis.forEach((el) => {
+            if (gear[slot].id !== el.id) {
+                dif.push(el);
+            }
+        });
 
         await interaction.reply({
-            content: "HEHE",
+            content: dif.toString(),
             ephemeral: true,
         });
     }
