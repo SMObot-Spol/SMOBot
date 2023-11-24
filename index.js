@@ -981,7 +981,7 @@ async function snapshotCreator(char, uid, snapBed) {
     const queryString = mysql.createQuery(updateQuery, gearData);
 
     log("queryString", queryString);
-    let exe = await execute(queryString);
+    let exe = await execute(queryString, true);
     log("exe", exe);
 
     if (exe == "DBERROR") {
