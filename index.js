@@ -956,6 +956,8 @@ async function snapshotCreator(char, uid, snapBed) {
 
     var gear = await getCharGear(char);
 
+    log("chargear", gear);
+
     if (Object.keys(gear).length === 0) {
         snapBed.fields.push({
             name: `${crossmoji} ${char.toUpperCase()}\n`,
@@ -975,7 +977,9 @@ async function snapshotCreator(char, uid, snapBed) {
 
     const queryString = mysql.createQuery(updateQuery, gearData);
 
+    log("queryString", queryString);
     let exe = await execute(queryString);
+    log("exe", exe);
 
     if (exe == "DBERROR") {
         snapBed.fields.push({
