@@ -3366,7 +3366,7 @@ bot.on("interactionCreate", async (interaction) => {
         let dif = [];
 
         palaBis.forEach((el) => {
-            if (gear[slot].id !== el.id) {
+            if (gear[el.slot].id !== el.id) {
                 dif.push(el);
             }
         });
