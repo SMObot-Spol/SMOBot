@@ -627,7 +627,7 @@ function raidRender(roleid) {
     return;
 }
 
-async function execute(query) {
+async function execute(query, fullQ) {
     let toons;
     const client = mysql.createConnection(dbConfig);
     try {
@@ -647,10 +647,17 @@ async function execute(query) {
 
         try {
             toons = await new Promise((resolve, reject) => {
-                client.query(query, (err, result) => {
-                    if (err) reject(err);
-                    else resolve(result);
-                });
+                if (fullQ) {
+                    client.query(query.query, query.values, (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    });
+                } else {
+                    client.query(query, (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    });
+                }
             });
 
             await new Promise((resolve, reject) => {
