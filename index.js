@@ -3389,7 +3389,7 @@ bot.on("interactionCreate", async (interaction) => {
             });
         } else {
             await interaction.reply({
-                content: dif.toString(),
+                content: JSON.stringify(dif),
                 ephemeral: false,
             });
         }
