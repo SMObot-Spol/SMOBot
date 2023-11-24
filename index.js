@@ -3337,7 +3337,9 @@ bot.on("interactionCreate", async (interaction) => {
 
         const char = options.getString("character").toLowerCase();
 
-        const gear = allChars.find((el) => el.character == char);
+        const gear = JSON.parse(
+            allChars.find((el) => el.character == char).gear
+        );
 
         console.log(gear);
 
