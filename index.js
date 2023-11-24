@@ -955,9 +955,8 @@ async function snapshotCreator(char, uid, snapBed) {
     }
 
     var gear = await getCharGear(char);
-    log(gear);
 
-    if (valClassId.classID == -1) {
+    if (gear.length == 0) {
         snapBed.fields.push({
             name: `${crossmoji} ${char.toUpperCase()}\n`,
             value: "\n**Postava**\n**neexistuje**\n",
