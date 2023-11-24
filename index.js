@@ -1496,6 +1496,10 @@ async function getCharClass(char) {
     };
 }
 
+function esc(str) {
+    return str.replaceAll(`'`, "'");
+}
+
 async function getCharGear(char) {
     let toonUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${char}&realm=Helios`;
     let gear;
@@ -1513,7 +1517,7 @@ async function getCharGear(char) {
                 gear = response.data.equipment.reduce((agg, curr) => {
                     agg[curr.slot] = {
                         id: curr.id,
-                        name: mysql.escape(curr.name),
+                        name: esc(curr.name),
                     };
                     return agg;
                 }, {});
