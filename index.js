@@ -668,7 +668,7 @@ async function execute(query) {
             console.error(err);
             return "DBERROR";
         } finally {
-            this.client.end();
+            client.end();
         }
     } catch (e) {
         console.error(e);
