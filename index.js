@@ -956,7 +956,7 @@ async function snapshotCreator(char, uid, snapBed) {
 
     var gear = await getCharGear(char);
 
-    if (gear.length == 0) {
+    if (Object.keys(gear).length === 0) {
         snapBed.fields.push({
             name: `${crossmoji} ${char.toUpperCase()}\n`,
             value: "\n**Postava**\n**neexistuje**\n",
@@ -1532,7 +1532,7 @@ async function getCharGear(char) {
                 };
             } catch (e) {
                 if (e.name == "TypeError") {
-                    gear = [];
+                    gear = {};
                 }
             }
         });
