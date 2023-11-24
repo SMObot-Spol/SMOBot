@@ -3317,6 +3317,37 @@ bot.on("interactionCreate", async (interaction) => {
         });
     }
 
+    if (commandName === "bis") {
+        let user = interaction.user.id;
+        let bisBed = {
+            title: "Character BIS Check",
+            description: `Your character BIS query returned :`,
+            color: 7419530,
+            timestamp: Date.now(),
+            footer: {
+                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+                text: "powered by SMObot",
+            },
+            author: {
+                name: "ID Manager",
+                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+            },
+            fields: [],
+        };
+        let queryFull = [];
+
+        const char = options.getString("character").toLowerCase();
+
+        const gear = findChar(char);
+
+        console.log(gear);
+
+        await interaction.reply({
+            content: "HEHE",
+            ephemeral: true,
+        });
+    }
+
     if (commandName === "removechar") {
         let user = interaction.user.id;
         let endMessage = "";
