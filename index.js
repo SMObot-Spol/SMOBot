@@ -3080,10 +3080,18 @@ bot.on("interactionCreate", async (interaction) => {
     }
 
     if (commandName === "addchar") {
-        if (options.getMentionable("userId")) {
-            log("userId");
-        }
         let user = interaction.user.id;
+        if (options.getUser("userid")) {
+            if (user === "319128664291672085") {
+                user = options.getUser("userid").id;
+            } else {
+                await interaction.reply({
+                    content: "NONO",
+                    ephemeral: true,
+                });
+                return;
+            }
+        }
         let addBed = {
             title: "ADD Character",
             description: `Your character add query returned :`,
