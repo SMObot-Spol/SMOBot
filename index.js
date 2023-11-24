@@ -1510,7 +1510,10 @@ async function getCharGear(char) {
         })
         .then(async function (response) {
             try {
-                gear = response.data.equipment.map((el) => el.id);
+                gear = response.data.equipment.reduce((agg, curr) => {
+                    agg[curr.slot] = { id: curr.id, name: curr.name };
+                    return agg;
+                }, {});
                 return {
                     gear,
                 };
@@ -1887,6 +1890,15 @@ bot.on("ready", async () => {
         new SlashCommandBuilder()
             .setName("snapshot")
             .setDescription("Snapshots your currently equipped gear")
+            .addStringOption((option) =>
+                option
+                    .setName("character")
+                    .setDescription("the name of your character")
+                    .setRequired(true)
+            ),
+        new SlashCommandBuilder()
+            .setName("bis")
+            .setDescription("Find out what items you need to achiev BIS")
             .addStringOption((option) =>
                 option
                     .setName("character")
@@ -3243,6 +3255,43 @@ bot.on("interactionCreate", async (interaction) => {
         await Promise.all(queryFull).then(async function (response) {
             await interaction.reply({
                 embeds: [addBed],
+                ephemeral: true,
+            });
+        });
+    }
+
+    if (commandName === "snapshot") {
+        let user = interaction.user.id;
+        let snapBed = {
+            title: "ADD Character",
+            description: `Your character add query returned :`,
+            color: 7419530,
+            timestamp: Date.now(),
+            footer: {
+                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+                text: "powered by SMObot",
+            },
+            author: {
+                name: "ID Manager",
+                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+            },
+            fields: [],
+        };
+        let queryFull = [];
+
+        if (options.getString("character")) {
+            queryFull.push(
+                snapshotCreator(
+                    options.getString("character").toLowerCase(),
+                    user,
+                    snapBed
+                )
+            );
+        }
+
+        await Promise.all(queryFull).then(async function (response) {
+            await interaction.reply({
+                embeds: [snapBed],
                 ephemeral: true,
             });
         });
