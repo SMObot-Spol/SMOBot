@@ -922,7 +922,7 @@ async function addCharacter(char, uid, addBed) {
         heal ? 1 : 0
     }','${mdmg ? 1 : 0}','${rdmg ? 1 : 0}','${
         valClassId.classID
-    }', '${ilvl}', '${gear}')
+    }', '${ilvl}', '${JSON.stringify(gear)}')
     RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl,gear`;
 
     let exe = await execute(queryString);
