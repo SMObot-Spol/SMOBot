@@ -1884,7 +1884,7 @@ bot.on("ready", async () => {
                     .setRequired(false)
             ),
         new SlashCommandBuilder()
-            .setName("snapshotGear")
+            .setName("snapshot")
             .setDescription("Snapshots your currently equipped gear")
             .addStringOption((option) =>
                 option
