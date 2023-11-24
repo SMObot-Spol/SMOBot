@@ -940,6 +940,52 @@ async function addCharacter(char, uid, addBed) {
     return addBed;
 }
 
+async function snapshotCreator(char, uid, snapBed) {
+    char = char.toLowerCase();
+
+    var charExist = await findChar(uid, char);
+
+    if (!charExist) {
+        snapBed.fields.push({
+            name: `${crossmoji} ${char.toUpperCase()}\n`,
+            value: "\n**Postava nie**\n**je v databáze**\n",
+            inline: true,
+        });
+        return snapBed;
+    }
+
+    var gear = await getCharGear(char);
+    log(gear);
+
+    if (valClassId.classID == -1) {
+        snapBed.fields.push({
+            name: `${crossmoji} ${char.toUpperCase()}\n`,
+            value: "\n**Postava**\n**neexistuje**\n",
+            inline: true,
+        });
+        return snapBed;
+    }
+
+    var queryString = `UPDATE \`toons\` SET \`gear\`='${gear}' WHERE \`discordid\`='${uid}' AND \`character\`='${char}'`;
+
+    let exe = await execute(queryString);
+
+    if (exe == "DBERROR") {
+        snapBed.fields.push({
+            name: `${crossmoji} ${char.toUpperCase()}\n`,
+            value: "\n**DATABASE**\n**ERROR**\n",
+            inline: true,
+        });
+        return snapBed;
+    }
+    snapBed.fields.push({
+        name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
+        value: "\n**Snapshot**\n**created**\n",
+        inline: true,
+    });
+    return snapBed;
+}
+
 async function removeCharacter(char, uid) {
     var finalMessage = "";
     char = char.toLowerCase();
@@ -1449,6 +1495,35 @@ async function getCharClass(char) {
     };
 }
 
+async function getCharGear(char) {
+    let toonUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${char}&realm=Helios`;
+    let gear;
+    await axios
+        .get(toonUrl)
+        .catch((error) => {
+            if (error.message.includes("unescaped")) {
+                sprava.channel.send("```Nauč sa písať ty mongol.```");
+            } else if (error.message.includes("403")) {
+                sprava.channel.send("```Nepíš sem sračky plox.```");
+            }
+        })
+        .then(async function (response) {
+            try {
+                gear = response.data.equipment.map((el) => el.id);
+                return {
+                    gear,
+                };
+            } catch (e) {
+                if (e.name == "TypeError") {
+                    gear = [];
+                }
+            }
+        });
+    return {
+        gear,
+    };
+}
+
 function compareNames(a, b) {
     var nameA = a.guild.name.toUpperCase(); // ignore upper and lowercase
     var nameB = b.guild.name.toUpperCase(); // ignore upper and lowercase
@@ -1807,6 +1882,15 @@ bot.on("ready", async () => {
                     .setName("userid")
                     .setDescription("the user you want to add character to")
                     .setRequired(false)
+            ),
+        new SlashCommandBuilder()
+            .setName("snapshotGear")
+            .setDescription("Snapshots your currently equipped gear")
+            .addStringOption((option) =>
+                option
+                    .setName("character")
+                    .setDescription("the name of your character")
+                    .setRequired(true)
             ),
         new SlashCommandBuilder()
             .setName("update")
@@ -3149,6 +3233,43 @@ bot.on("interactionCreate", async (interaction) => {
             queryFull.push(
                 addCharacter(
                     options.getString("character5").toLowerCase(),
+                    user,
+                    addBed
+                )
+            );
+        }
+
+        await Promise.all(queryFull).then(async function (response) {
+            await interaction.reply({
+                embeds: [addBed],
+                ephemeral: true,
+            });
+        });
+    }
+
+    if (commandName === "addchar") {
+        let user = interaction.user.id;
+        let addBed = {
+            title: "ADD Character",
+            description: `Your character add query returned :`,
+            color: 7419530,
+            timestamp: Date.now(),
+            footer: {
+                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+                text: "powered by SMObot",
+            },
+            author: {
+                name: "ID Manager",
+                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+            },
+            fields: [],
+        };
+        let queryFull = [];
+
+        if (options.getString("character")) {
+            queryFull.push(
+                addCharacter(
+                    options.getString("character").toLowerCase(),
                     user,
                     addBed
                 )
