@@ -3317,43 +3317,6 @@ bot.on("interactionCreate", async (interaction) => {
         });
     }
 
-    if (commandName === "snapshot") {
-        let user = interaction.user.id;
-        let snapBed = {
-            title: "ADD Character",
-            description: `Your character add query returned :`,
-            color: 7419530,
-            timestamp: Date.now(),
-            footer: {
-                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-                text: "powered by SMObot",
-            },
-            author: {
-                name: "ID Manager",
-                icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-            },
-            fields: [],
-        };
-        let queryFull = [];
-
-        if (options.getString("character")) {
-            queryFull.push(
-                snapshotCreator(
-                    options.getString("character").toLowerCase(),
-                    user,
-                    snapBed
-                )
-            );
-        }
-
-        await Promise.all(queryFull).then(async function (response) {
-            await interaction.reply({
-                embeds: [snapBed],
-                ephemeral: true,
-            });
-        });
-    }
-
     if (commandName === "removechar") {
         let user = interaction.user.id;
         let endMessage = "";
