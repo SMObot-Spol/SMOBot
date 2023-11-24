@@ -450,8 +450,6 @@ var task = cron.schedule(
     }
 );
 
-const client = mysql.createConnection(dbConfig);
-
 var allChars = [];
 var allRaids = [];
 
@@ -631,16 +629,17 @@ function raidRender(roleid) {
 
 async function execute(query) {
     let toons;
+    const client = mysql.createConnection(dbConfig);
     try {
         await new Promise((resolve, reject) => {
-            this.client.connect((err) => {
+            client.connect((err) => {
                 if (err) reject(err);
                 else resolve();
             });
         });
 
         await new Promise((resolve, reject) => {
-            this.client.beginTransaction((err) => {
+            client.beginTransaction((err) => {
                 if (err) reject(err);
                 else resolve();
             });
@@ -648,21 +647,21 @@ async function execute(query) {
 
         try {
             toons = await new Promise((resolve, reject) => {
-                this.client.query(query, (err, result) => {
+                client.query(query, (err, result) => {
                     if (err) reject(err);
                     else resolve(result);
                 });
             });
 
             await new Promise((resolve, reject) => {
-                this.client.commit((err) => {
+                client.commit((err) => {
                     if (err) reject(err);
                     else resolve();
                 });
             });
         } catch (err) {
             await new Promise((resolve, reject) => {
-                this.client.rollback(() => {
+                client.rollback(() => {
                     reject(err);
                 });
             });
