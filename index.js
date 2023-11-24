@@ -3338,7 +3338,7 @@ bot.on("interactionCreate", async (interaction) => {
 
         const char = options.getString("character").toLowerCase();
 
-        const gear = findChar(char);
+        const gear = await findChar(char);
 
         console.log(gear);
 
