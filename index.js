@@ -633,14 +633,14 @@ async function execute(query) {
     let toons;
     try {
         await new Promise((resolve, reject) => {
-            client.connect((err) => {
+            this.client.connect((err) => {
                 if (err) reject(err);
                 else resolve();
             });
         });
 
         await new Promise((resolve, reject) => {
-            client.beginTransaction((err) => {
+            this.client.beginTransaction((err) => {
                 if (err) reject(err);
                 else resolve();
             });
@@ -648,28 +648,28 @@ async function execute(query) {
 
         try {
             toons = await new Promise((resolve, reject) => {
-                client.query(query, (err, result) => {
+                this.client.query(query, (err, result) => {
                     if (err) reject(err);
                     else resolve(result);
                 });
             });
 
             await new Promise((resolve, reject) => {
-                client.commit((err) => {
+                this.client.commit((err) => {
                     if (err) reject(err);
                     else resolve();
                 });
             });
         } catch (err) {
             await new Promise((resolve, reject) => {
-                client.rollback(() => {
+                this.client.rollback(() => {
                     reject(err);
                 });
             });
             console.error(err);
             return "DBERROR";
         } finally {
-            client.end();
+            this.client.end();
         }
     } catch (e) {
         console.error(e);
