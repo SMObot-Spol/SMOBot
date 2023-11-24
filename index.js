@@ -967,11 +967,7 @@ async function snapshotCreator(char, uid, snapBed) {
         return snapBed;
     }
 
-    const updateQuery = `
-  UPDATE \`toons\`
-  SET \`gear\` = ?
-  WHERE \`discordid\` = '${uid}' AND \`character\` = '${char}';
-`;
+    const updateQuery = `UPDATE \`toons\` SET \`gear\` = ? WHERE \`discordid\` = '${uid}' AND \`character\` = '${char}';`;
 
     const gearData = JSON.stringify(gear);
 
