@@ -3371,10 +3371,17 @@ bot.on("interactionCreate", async (interaction) => {
             }
         });
 
-        await interaction.reply({
-            content: dif.toString(),
-            ephemeral: true,
-        });
+        if (dif.length === 0) {
+            await interaction.reply({
+                content: "BIS",
+                ephemeral: false,
+            });
+        } else {
+            await interaction.reply({
+                content: dif.toString(),
+                ephemeral: false,
+            });
+        }
     }
 
     if (commandName === "removechar") {
