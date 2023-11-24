@@ -1511,7 +1511,10 @@ async function getCharGear(char) {
         .then(async function (response) {
             try {
                 gear = response.data.equipment.reduce((agg, curr) => {
-                    agg[curr.slot] = { id: curr.id, name: curr.name };
+                    agg[curr.slot] = {
+                        id: curr.id,
+                        name: mysql.escape(curr.name),
+                    };
                     return agg;
                 }, {});
                 return {
