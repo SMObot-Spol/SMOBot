@@ -965,9 +965,15 @@ async function snapshotCreator(char, uid, snapBed) {
         return snapBed;
     }
 
-    var queryString = `UPDATE \`toons\` SET \`gear\`='${JSON.stringify(
-        gear
-    )}' WHERE \`discordid\`='${uid}' AND \`character\`='${char}'`;
+    const updateQuery = `
+  UPDATE \`toons\`
+  SET \`gear\` = ?
+  WHERE \`discordid\` = '${uid}' AND \`character\` = '${char}';
+`;
+
+    const gearData = JSON.stringify(gear);
+
+    const queryString = mysql.createQuery(updateQuery, gearData);
 
     let exe = await execute(queryString);
 
