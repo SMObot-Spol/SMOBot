@@ -917,15 +917,19 @@ async function addCharacter(char, uid, addBed) {
         rdmg = true;
     }
 
-    var queryString = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear)
+    var addQuery = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear)
     VALUES ('${uid}', '${char.toLowerCase()}', '${tank ? 1 : 0}','${
         heal ? 1 : 0
     }','${mdmg ? 1 : 0}','${rdmg ? 1 : 0}','${
         valClassId.classID
-    }', '${ilvl}', '${JSON.stringify(gear)}')
+    }', '${ilvl}', ?')
     RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl,gear`;
 
-    let exe = await execute(queryString);
+    const gearData = JSON.stringify(gear);
+
+    const queryString = mysql.createQuery(addQuery, gearData);
+
+    let exe = await execute(queryString, true);
 
     if (exe) {
         exe.forEach((row) => {
