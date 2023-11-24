@@ -963,8 +963,6 @@ async function snapshotCreator(char, uid, snapBed) {
 
     var gear = await getCharGear(char);
 
-    log("chargear", gear);
-
     if (Object.keys(gear).length === 0) {
         snapBed.fields.push({
             name: `${crossmoji} ${char.toUpperCase()}\n`,
@@ -997,6 +995,14 @@ async function snapshotCreator(char, uid, snapBed) {
         value: "\n**Snapshot**\n**created**\n",
         inline: true,
     });
+    const charIndex = allChars.findIndex(
+        (el) => el.character === char.toLowerCase()
+    );
+    allChars[charIndex] = {
+        ...allChars[charIndex],
+        gear: gear,
+    };
+    console.log(allChars);
     return snapBed;
 }
 
@@ -3282,6 +3288,7 @@ bot.on("interactionCreate", async (interaction) => {
 
     if (commandName === "snapshot") {
         let user = interaction.user.id;
+        const char = options.getString("character");
         let snapBed = {
             title: "ADD Character",
             description: `Your character add query returned :`,
@@ -3299,15 +3306,7 @@ bot.on("interactionCreate", async (interaction) => {
         };
         let queryFull = [];
 
-        if (options.getString("character")) {
-            queryFull.push(
-                snapshotCreator(
-                    options.getString("character").toLowerCase(),
-                    user,
-                    snapBed
-                )
-            );
-        }
+        queryFull.push(snapshotCreator(char.toLowerCase(), user, snapBed));
 
         await Promise.all(queryFull).then(async function (response) {
             await interaction.reply({
@@ -3338,7 +3337,7 @@ bot.on("interactionCreate", async (interaction) => {
 
         const char = options.getString("character").toLowerCase();
 
-        const gear = await findChar(char);
+        const gear = allChars.find((el) => el.character == char);
 
         console.log(gear);
 
