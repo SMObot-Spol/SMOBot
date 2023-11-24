@@ -875,7 +875,7 @@ async function addCharacter(char, uid, addBed) {
     }
 
     var valClassId = await getCharClass(char);
-    console.log("valclas", valClassId);
+    var gear = await getCharGear(char);
 
     if (valClassId.classID == -1) {
         addBed.fields.push({
@@ -917,11 +917,13 @@ async function addCharacter(char, uid, addBed) {
         rdmg = true;
     }
 
-    var queryString = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl)
+    var queryString = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear)
     VALUES ('${uid}', '${char.toLowerCase()}', '${tank ? 1 : 0}','${
         heal ? 1 : 0
-    }','${mdmg ? 1 : 0}','${rdmg ? 1 : 0}','${valClassId.classID}', '${ilvl}')
-    RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl`;
+    }','${mdmg ? 1 : 0}','${rdmg ? 1 : 0}','${
+        valClassId.classID
+    }', '${ilvl}', '${gear}')
+    RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl,gear`;
 
     let exe = await execute(queryString);
 
