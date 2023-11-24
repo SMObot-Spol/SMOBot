@@ -648,7 +648,7 @@ async function execute(query, fullQ) {
         try {
             toons = await new Promise((resolve, reject) => {
                 if (fullQ) {
-                    client.query(query.query, query.values, (err, result) => {
+                    client.query(query.sql, query.values, (err, result) => {
                         if (err) reject(err);
                         else resolve(result);
                     });
