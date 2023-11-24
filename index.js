@@ -3247,9 +3247,9 @@ bot.on("interactionCreate", async (interaction) => {
         });
     }
 
-    if (commandName === "addchar") {
+    if (commandName === "snapshot") {
         let user = interaction.user.id;
-        let addBed = {
+        let snapBed = {
             title: "ADD Character",
             description: `Your character add query returned :`,
             color: 7419530,
@@ -3268,17 +3268,17 @@ bot.on("interactionCreate", async (interaction) => {
 
         if (options.getString("character")) {
             queryFull.push(
-                addCharacter(
+                snapshotCreator(
                     options.getString("character").toLowerCase(),
                     user,
-                    addBed
+                    snapBed
                 )
             );
         }
 
         await Promise.all(queryFull).then(async function (response) {
             await interaction.reply({
-                embeds: [addBed],
+                embeds: [snapBed],
                 ephemeral: true,
             });
         });
