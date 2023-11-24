@@ -1802,10 +1802,10 @@ bot.on("ready", async () => {
                     .setDescription("the name of your character")
                     .setRequired(false)
             )
-            .addMentionableOption((option) =>
+            .addUserOption((option) =>
                 option
-                    .setName("userId")
-                    .setDescription("user that owns the character")
+                    .setName("userid")
+                    .setDescription("the user you want to add character to")
                     .setRequired(false)
             ),
         new SlashCommandBuilder()
