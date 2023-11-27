@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv").config({ path: "./.env" });
 require("isomorphic-fetch");
 var mysql = require("mysql");
-const { Pool, Client: Dabz } = require("pg");
 const axios = require("axios");
 const util = require("util");
 const ytdl = require("play-dl");
@@ -430,10 +429,18 @@ let testBed = { fields: [] };
 let testguild;
 
 console.log("Bot Fired Up!");
-console.log(process.env.DTOKEN);
+
+console.log("DB_HOST=", process.env.DB_HOST);
+console.log("DB_USER=", process.env.DB_USER);
+console.log("DB_PASS=", process.env.DB_PASS);
+console.log("DB_TABLE=", process.env.DB_TABLE);
+console.log("GIPI=", process.env.GIPI);
+console.log("EMOJIID=", process.env.EMOJIID);
+console.log("TESTID=", process.env.TESTID);
+console.log("CLIENTID=", process.env.CLIENTID);
+
 let rous;
 var cron = require("node-cron");
-const utils = require("pg/lib/utils");
 const { clearTimeout } = require("timers");
 const { log } = require("console");
 var task = cron.schedule(
