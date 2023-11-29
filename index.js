@@ -7,8 +7,11 @@ const axios = require("axios");
 const util = require("util");
 const ytdl = require("play-dl");
 const ytsr = require("ytsr");
+const fns = require("date-fns");
 const Voice = require("@discordjs/voice");
 const { GiphyFetch } = require("@giphy/js-fetch-api");
+
+const bislist = require("./bislist.json");
 
 const gipi = new GiphyFetch(process.env.GIPI);
 const {
@@ -129,6 +132,28 @@ let classes = [
     ["Druid", "<:druid:938287643110809601>"],
 ];
 
+let slots = [
+    "Head",
+    "Neck",
+    "Shoulder",
+    "?",
+    "Chest",
+    "Belt",
+    "Legs",
+    "Boots",
+    "Bracers",
+    "Gloves",
+    "Ring1",
+    "Ring2",
+    "Trinket1",
+    "Trinket2",
+    "Cloak",
+    "Main-Hand",
+    "Off-Hand",
+    "Shirt",
+    "Tabard",
+];
+
 class Toonie {
     constructor(userId, name, charClass, charRole) {
         this.userId = userId;
@@ -213,7 +238,6 @@ async function proceed(gqueue, cguild) {
 }
 
 async function updatePlaying(gqueue, cguild) {
-    console.log("TUSOMMM");
     if (!gqueue.textChannel && gqueue.voiceChannel) {
         let guild = bot.guilds.cache.get(cguild);
         let voice = guild.channels.cache.get(gqueue.voiceChannel);
@@ -266,7 +290,6 @@ async function updatePlaying(gqueue, cguild) {
     }
 
     if (gqueue.songs.length == 0 && gqueue.autoplay == false) {
-        console.log("HERE");
         let announce = [
             {
                 name: "No songs in the queue.",
@@ -430,19 +453,11 @@ let testguild;
 
 console.log("Bot Fired Up!");
 
-console.log("DB_HOST=", process.env.DB_HOST);
-console.log("DB_USER=", process.env.DB_USER);
-console.log("DB_PASS=", process.env.DB_PASS);
-console.log("DB_TABLE=", process.env.DB_TABLE);
-console.log("GIPI=", process.env.GIPI);
-console.log("EMOJIID=", process.env.EMOJIID);
-console.log("TESTID=", process.env.TESTID);
-console.log("CLIENTID=", process.env.CLIENTID);
-
 let rous;
 var cron = require("node-cron");
 const { clearTimeout } = require("timers");
 const { log } = require("console");
+
 var task = cron.schedule(
     "0 0 1 1 *",
     () => {
@@ -608,6 +623,8 @@ async function playSingle(text, guildid, cchan, seek) {
     try {
         stream = await ytdl.stream(queue.songs[0]?.url, {
             seek: seek ? seek : 0,
+            quality: 2,
+            discordPlayerCompatibility: true,
         });
     } catch (error) {
         console.log(error);
@@ -775,9 +792,11 @@ async function channelChange(user, message) {
 async function updateCharacter(char, uid, addBed) {
     char = char.toLowerCase();
 
-    var valClassId = await getCharClass(char);
+    var { classID, classSpec1, classSpec2, ilvl, gear } = await getCharClass(
+        char
+    );
 
-    if (valClassId.classID == -1) {
+    if (classID == -1) {
         let charIndex = allChars.findIndex((c) => c.character == char);
         allChars.splice(charIndex, 1);
         addBed.fields.push({
@@ -802,8 +821,8 @@ async function updateCharacter(char, uid, addBed) {
     var rdmg = false;
     var heal = false;
 
-    var classSpecCombo1 = `${valClassId.classID}-${valClassId.classSpec1}`;
-    var classSpecCombo2 = `${valClassId.classID}-${valClassId.classSpec2}`;
+    var classSpecCombo1 = `${classID}-${classSpec1}`;
+    var classSpecCombo2 = `${classID}-${classSpec2}`;
 
     if (tanks.includes(classSpecCombo1) || tanks.includes(classSpecCombo2)) {
         tank = true;
@@ -826,7 +845,7 @@ async function updateCharacter(char, uid, addBed) {
       heal = '${heal}',
       mdps = '${mdmg}',
       rdps = '${rdmg}',
-      classid = '${valClassId.classID}',
+      classid = '${classID}',
       ilvl = ${ilvl}
       WHERE character = '${char.toLowerCase()}' AND discordid = '${uid}'
       RETURNING id, discordid, character, tank, heal, mdps, rdps, classid, ilvl`;
@@ -881,10 +900,11 @@ async function addCharacter(char, uid, addBed) {
         return addBed;
     }
 
-    var valClassId = await getCharClass(char);
-    var gear = await getCharGear(char);
+    var { classID, ilvl, classSpec1, classSpec2, gear } = await getCharClass(
+        char
+    );
 
-    if (valClassId.classID == -1) {
+    if (classID == -1) {
         addBed.fields.push({
             name: `${crossmoji} ${char.toUpperCase()}\n`,
             value: "\n**Postava**\n**neexistuje**\n",
@@ -894,7 +914,7 @@ async function addCharacter(char, uid, addBed) {
     }
 
     //TODO TOTO SA ASI DA NARAZ ???
-    var ilvl = valClassId.ilvl;
+    var ilvl = ilvl;
 
     if (isNaN(ilvl)) {
         ilvl = 0;
@@ -905,8 +925,8 @@ async function addCharacter(char, uid, addBed) {
     var rdmg = false;
     var heal = false;
 
-    var classSpecCombo1 = `${valClassId.classID}-${valClassId.classSpec1}`;
-    var classSpecCombo2 = `${valClassId.classID}-${valClassId.classSpec2}`;
+    var classSpecCombo1 = `${classID}-${classSpec1}`;
+    var classSpecCombo2 = `${classID}-${classSpec2}`;
 
     if (tanks.includes(classSpecCombo1) || tanks.includes(classSpecCombo2)) {
         tank = true;
@@ -934,7 +954,7 @@ async function addCharacter(char, uid, addBed) {
         heal ? 1 : 0,
         mdmg ? 1 : 0,
         rdmg ? 1 : 0,
-        valClassId.classID,
+        classID,
         ilvl,
         gearData,
     ];
@@ -1020,7 +1040,6 @@ async function snapshotCreator(char, uid, snapBed) {
         ...allChars[charIndex],
         gear: gear,
     };
-    console.log(allChars);
     return snapBed;
 }
 
@@ -1055,176 +1074,330 @@ function aGet(url) {
     return axios.get(url);
 }
 
-async function getID(chars, raidString, idBed, freeOnly) {
+// async function getID(chars, eRaid, idBed, freeOnly) {
+//     let endpoints = [];
+//     let idBeds = [];
+//     let cName = "";
+//     let valArray = [];
+//     let requestNumber = 1;
+
+//     for await (const char of chars) {
+//         if (requestNumber % 30 == 0) {
+//             await delay(10000);
+//         }
+//         requestNumber++;
+//         let charUrl = `https://mop-twinhead.twinstar.cz/?character=${char.name}&realm=Helios`;
+//         endpoints.push(aGet(charUrl));
+//     }
+
+//     idBeds.push(Object.create(idBed));
+
+//     let index = -1;
+//     let idBedIndex = 0;
+//     let length = 0;
+
+//     await Promise.all(endpoints)
+//         .then(function (response) {
+//             for (const resp of response) {
+//                 let ilvl;
+//                 index += 1;
+//                 let script = "";
+//                 let subsLeft = "";
+//                 let subs = "";
+//                 let classid;
+//                 let classicon;
+
+//                 cName = chars[index].name;
+//                 let charUrl = `https://mop-twinhead.twinstar.cz/?character=${cName}&realm=Helios`;
+//                 let armoryUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${cName}&realm=Helios`;
+//                 ilvl = chars[index].ilvl;
+//                 classid = chars[index].classid;
+//                 length = chars.length - 1;
+
+//                 try {
+//                     script = resp.data.toString();
+//                     if (script.search("Character ") == -1) {
+//                         valArray.push({
+//                             name: `${crossmoji} ${cName.toUpperCase()}\n`,
+//                             value: "\n\u2800\n**Postava neexistuje**\n",
+//                             inline: true,
+//                         });
+//                         continue;
+//                     }
+//                     subsLeft = script.substring(script.indexOf(raidString));
+//                     subs = subsLeft.substring(0, subsLeft.indexOf("}] });"));
+//                 } catch (e) {
+//                     console.log(e);
+//                     if (e.name == "TypeError") {
+//                         valArray.push({
+//                             name: `${crossmoji} ${cName.toUpperCase()}\n`,
+//                             value: "\n\u2800\n**Postava neexistuje**\n",
+//                             inline: true,
+//                         });
+//                         console.log(e);
+//                         continue;
+//                     }
+//                 }
+
+//                 let bossKills;
+
+//                 if (ilvl == 0) ilvl = "#";
+
+//                 if (classid !== undefined) {
+//                     classicon = `\n${classes[classid - 1][1]} **(${ilvl})**`;
+//                 } else {
+//                     classicon = "";
+//                 }
+
+//                 try {
+//                     bossKills = JSON.parse(subs.split("data: ")[1] + "}]");
+//                 } catch (e) {
+//                     console.log(e);
+//                     valArray.push({
+//                         name: `${checkmoji} ${cName.toUpperCase()} ${checkmoji}\n`,
+//                         value: `\n[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\n**Postava nemá**\n**žiadny relevantný**\n**bosskill**\n\u2800\n\u2800\n--------`,
+//                         inline: true,
+//                     });
+//                     continue;
+//                 }
+
+//                 // 2022/01/25 20:35:18
+//                 let dateData = bossKills[0].time.split(" ");
+
+//                 let datePart = dateData[0].split("/");
+//                 let timePart = dateData[1].split(":");
+
+//                 let year = parseInt(datePart[0]);
+//                 let month = parseInt(datePart[1]);
+//                 let day = parseInt(datePart[2]);
+//                 let hours = parseInt(timePart[0]);
+//                 let minutes = parseInt(timePart[1]);
+//                 let seconds = parseInt(timePart[2]);
+
+//                 let date = new Date(
+//                     Date.UTC(year, month - 1, day, hours - 1, minutes, seconds)
+//                 );
+
+//                 let today = new Date();
+
+//                 let lastWed = new Date();
+//                 lastWed.setUTCDate(
+//                     lastWed.getUTCDate() - ((lastWed.getUTCDay() + 4) % 7)
+//                 );
+//                 lastWed.setUTCHours("5", "0", "0");
+
+//                 if (
+//                     lastWed.getDay() == today.getDay() &&
+//                     lastWed.getMonth() == today.getMonth() &&
+//                     lastWed.getFullYear() == today.getFullYear() &&
+//                     today.getHours() < 4
+//                 ) {
+//                     lastWed.setUTCDate(lastWed.getUTCDate() - 7);
+//                 }
+
+//                 let nextWed = new Date();
+//                 nextWed.setUTCDate(lastWed.getUTCDate() + 7);
+//                 nextWed.setUTCHours("5", "0", "0");
+
+//                 ilvl = Math.round(parseFloat(bossKills[0].avg_item_lvl));
+//                 classid = Math.round(parseFloat(bossKills[0].class));
+
+//                 if (ilvl == 0) ilvl = "#";
+
+//                 if (classid !== undefined) {
+//                     classicon = `\n${classes[classid - 1][1]} **(${ilvl})**`;
+//                 } else {
+//                     classicon = "";
+//                 }
+
+//                 if (date.getTime() > lastWed.getTime()) {
+//                     if (freeOnly) continue;
+//                     valArray.push({
+//                         name: `${crossmoji} ${cName.toUpperCase()}\n`,
+//                         value: `[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\nLast Bosskill\n${
+//                             bossKills[0].bossname
+//                         }\n${bossKills[0].difficulty}\n${date.toLocaleString(
+//                             "sk-SK",
+//                             {
+//                                 timeZone: "Europe/Bratislava",
+//                             }
+//                         )}\n\n--------`,
+//                         inline: true,
+//                     });
+//                 } else {
+//                     valArray.push({
+//                         name: `${checkmoji} ${cName.toUpperCase()}\n`,
+//                         value: `[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\nLast Bosskill\n${
+//                             bossKills[0].bossname
+//                         }\n${bossKills[0].difficulty}\n${date.toLocaleString(
+//                             "sk-SK",
+//                             {
+//                                 timeZone: "Europe/Bratislava",
+//                             }
+//                         )}\n\n--------`,
+//                         inline: true,
+//                     });
+//                 }
+//             }
+//         })
+//         .catch(function (error) {
+//             // handle error
+//             console.log(error);
+//         });
+
+//     valArray.sort(compareRows);
+
+//     for (const value of valArray) {
+//         idBeds[idBedIndex].fields.push(value);
+
+//         if (idBeds[idBedIndex].fields.length >= 18) {
+//             idBeds.push(Object.create(idBed));
+//             idBeds[idBedIndex].fields =
+//                 idBeds[idBedIndex].fields.sort(compareRows);
+
+//             idBeds[idBedIndex + 1].fields = [];
+//             idBeds[idBedIndex + 1].title = null;
+//             idBeds[idBedIndex + 1].description = null;
+//             idBeds[idBedIndex + 1].author = null;
+
+//             idBedIndex++;
+//         }
+//     }
+
+//     if (idBeds[idBedIndex].fields.length == 0) {
+//         idBedIndex--;
+//         idBeds.pop();
+//     }
+
+//     idBeds[idBedIndex].footer = {
+//         icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
+//         text: "powered by SMObot.",
+//     };
+
+//     if (
+//         idBeds[idBedIndex].fields.length % 3 != 0 &&
+//         idBeds[idBedIndex].fields.length > 1
+//     ) {
+//         let more = idBeds[idBedIndex].fields.length % 3;
+//         for (let index = 0; index < 3 - more; index++) {
+//             idBeds[idBedIndex].fields.push({
+//                 //name: `--=TOBEESTABLISHED=--\n`,
+//                 //value: `\n\u2800\n**A character**\n**could be here**\n**if you stopped**\n**being lazy and**\n**made one.**\n\u2800\n\u2800\n--------`,
+//                 name: "=====EMPTY=====",
+//                 value: "```\n+---------------+\n|               |\n|               |\n|               |\n|               |\n|               |\n|               |\n+---------------+```",
+//                 inline: true,
+//             });
+//         }
+//     }
+
+//     idBeds[idBedIndex].timestamp = Date.now();
+
+//     return idBeds;
+// }
+
+async function getID(chars, eRaid, idBed, freeOnly) {
     let endpoints = [];
     let idBeds = [];
     let cName = "";
     let valArray = [];
     let requestNumber = 1;
-
-    for await (const char of chars) {
-        if (requestNumber % 30 == 0) {
-            await delay(10000);
-        }
-        requestNumber++;
-        let charUrl = `https://mop-twinhead.twinstar.cz/?character=${char.name}&realm=Helios`;
-        endpoints.push(aGet(charUrl));
-    }
-
+    let idBedIndex = 0;
     idBeds.push(Object.create(idBed));
 
-    let index = -1;
-    let idBedIndex = 0;
-    let length = 0;
+    for await (const char of chars) {
+        requestNumber++;
+        let apiUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${char.name}&realm=Helios`;
+        let normalUrl = `https://twinstar-api.twinstar-wow.com/bosskills/player/?name=${
+            char.name
+        }&realm=Helios&mode=3&map=${encodeURIComponent(eRaid)}&pageSize=1`;
+        let heroicUrl = `https://twinstar-api.twinstar-wow.com/bosskills/player/?name=${
+            char.name
+        }&realm=Helios&mode=5&map=${encodeURIComponent(eRaid)}&pageSize=1`;
 
-    await Promise.all(endpoints)
-        .then(function (response) {
-            for (const resp of response) {
-                let ilvl;
-                index += 1;
-                let script = "";
-                let subsLeft = "";
-                let subs = "";
-                let classid;
-                let classicon;
+        endpoints.push(aGet(apiUrl));
+        endpoints.push(aGet(heroicUrl));
+        endpoints.push(await aGet(normalUrl));
+    }
 
-                cName = chars[index].name;
-                let charUrl = `https://mop-twinhead.twinstar.cz/?character=${cName}&realm=Helios`;
-                let armoryUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${cName}&realm=Helios`;
-                ilvl = chars[index].ilvl;
-                classid = chars[index].classid;
-                length = chars.length - 1;
+    const res = await Promise.allSettled(endpoints);
 
-                try {
-                    script = resp.data.toString();
-                    if (script.search("Character ") == -1) {
-                        valArray.push({
-                            name: `${crossmoji} ${cName.toUpperCase()}\n`,
-                            value: "\n\u2800\n**Postava neexistuje**\n",
-                            inline: true,
-                        });
-                        continue;
-                    }
-                    subsLeft = script.substring(script.indexOf(raidString));
-                    subs = subsLeft.substring(0, subsLeft.indexOf("}] });"));
-                } catch (e) {
-                    console.log(e);
-                    if (e.name == "TypeError") {
-                        valArray.push({
-                            name: `${crossmoji} ${cName.toUpperCase()}\n`,
-                            value: "\n\u2800\n**Postava neexistuje**\n",
-                            inline: true,
-                        });
-                        console.log(e);
-                        continue;
-                    }
-                }
+    for (let index = 0; index < res.length; index += 3) {
+        const temp = res[index].value.data;
+        const temp2 = res[index + 1].value.data;
+        const temp3 = res[index + 2].value.data;
 
-                let bossKills;
+        const armoryUrl = `https://https://mop-twinhead.twinstar.cz/?character=${temp.name}&realm=Helios`;
+        const charUrl = `https://armory.twinstar-wow.com/character?realm=Helios&name=${temp.name}`;
 
-                if (ilvl == 0) ilvl = "#";
+        let ilvl;
+        let classid;
+        let classicon;
 
-                if (classid !== undefined) {
-                    classicon = `\n${classes[classid - 1][1]} **(${ilvl})**`;
-                } else {
-                    classicon = "";
-                }
+        cName = temp.name;
+        ilvl = temp.averageItemLevel ? temp.averageItemLevel.toFixed(2) : 0;
+        classid = temp.class;
 
-                try {
-                    bossKills = JSON.parse(subs.split("data: ")[1] + "}]");
-                } catch (e) {
-                    console.log(e);
-                    valArray.push({
-                        name: `${checkmoji} ${cName.toUpperCase()} ${checkmoji}\n`,
-                        value: `\n[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\n**Postava nemá**\n**žiadny relevantný**\n**bosskill**\n\u2800\n\u2800\n--------`,
-                        inline: true,
-                    });
-                    continue;
-                }
+        if (classid !== undefined) {
+            classicon = `\n${classes[classid - 1][1]} **(${ilvl})**`;
+        } else {
+            classicon = "";
+        }
 
-                // 2022/01/25 20:35:18
-                let dateData = bossKills[0].time.split(" ");
+        if (temp2.total === 0) {
+            valArray.push({
+                name: `${checkmoji} ${cName.toUpperCase()}\n`,
+                value: `\n[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\n**Postava nemá**\n**žiadny relevantný**\n**bosskill**\n\u2800\n\u2800\n--------`,
+                inline: true,
+            });
+            continue;
+        }
 
-                let datePart = dateData[0].split("/");
-                let timePart = dateData[1].split(":");
+        // 2022/01/25 20:35:18
 
-                let year = parseInt(datePart[0]);
-                let month = parseInt(datePart[1]);
-                let day = parseInt(datePart[2]);
-                let hours = parseInt(timePart[0]);
-                let minutes = parseInt(timePart[1]);
-                let seconds = parseInt(timePart[2]);
+        let lastWed = fns.previousWednesday(new Date());
+        let today = new Date();
+        lastWed.setUTCHours("5", "0", "0");
 
-                let date = new Date(
-                    Date.UTC(year, month - 1, day, hours - 1, minutes, seconds)
-                );
+        if (
+            lastWed.getDay() == today.getDay() &&
+            lastWed.getMonth() == today.getMonth() &&
+            lastWed.getFullYear() == today.getFullYear() &&
+            today.getHours() < 4
+        ) {
+            lastWed.setUTCDate(lastWed.getUTCDate() - 7);
+        }
 
-                let today = new Date();
+        let nextWed = fns.nextWednesday(new Date());
+        nextWed.setUTCHours("5", "0", "0");
 
-                let lastWed = new Date();
-                lastWed.setUTCDate(
-                    lastWed.getUTCDate() - ((lastWed.getUTCDay() + 4) % 7)
-                );
-                lastWed.setUTCHours("5", "0", "0");
-
-                if (
-                    lastWed.getDay() == today.getDay() &&
-                    lastWed.getMonth() == today.getMonth() &&
-                    lastWed.getFullYear() == today.getFullYear() &&
-                    today.getHours() < 4
-                ) {
-                    lastWed.setUTCDate(lastWed.getUTCDate() - 7);
-                }
-
-                let nextWed = new Date();
-                nextWed.setUTCDate(lastWed.getUTCDate() + 7);
-                nextWed.setUTCHours("5", "0", "0");
-
-                ilvl = Math.round(parseFloat(bossKills[0].avg_item_lvl));
-                classid = Math.round(parseFloat(bossKills[0].class));
-
-                if (ilvl == 0) ilvl = "#";
-
-                if (classid !== undefined) {
-                    classicon = `\n${classes[classid - 1][1]} **(${ilvl})**`;
-                } else {
-                    classicon = "";
-                }
-
-                if (date.getTime() > lastWed.getTime()) {
-                    if (freeOnly) continue;
-                    valArray.push({
-                        name: `${crossmoji} ${cName.toUpperCase()}\n`,
-                        value: `[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\nLast Bosskill\n${
-                            bossKills[0].bossname
-                        }\n${bossKills[0].difficulty}\n${date.toLocaleString(
-                            "sk-SK",
-                            {
-                                timeZone: "Europe/Bratislava",
-                            }
-                        )}\n\n--------`,
-                        inline: true,
-                    });
-                } else {
-                    valArray.push({
-                        name: `${checkmoji} ${cName.toUpperCase()}\n`,
-                        value: `[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\nLast Bosskill\n${
-                            bossKills[0].bossname
-                        }\n${bossKills[0].difficulty}\n${date.toLocaleString(
-                            "sk-SK",
-                            {
-                                timeZone: "Europe/Bratislava",
-                            }
-                        )}\n\n--------`,
-                        inline: true,
-                    });
-                }
-            }
-        })
-        .catch(function (error) {
-            // handle error
-            console.log(error);
-        });
+        let date = new Date(temp2.data[0].boss_kills.time);
+        if (date.getTime() > lastWed.getTime()) {
+            if (freeOnly) continue;
+            valArray.push({
+                name: `${crossmoji} ${cName.toUpperCase()}\n`,
+                value: `[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\nLast Bosskill\n${
+                    temp2.data[0].boss_kills.creature_name
+                }\n${
+                    temp2.data[0].boss_kills.mode === 5 ? "Heroic" : "Normal"
+                }\n${date.toLocaleString("sk-SK", {
+                    timeZone: "Europe/Bratislava",
+                })}\n\n--------`,
+                inline: true,
+            });
+        } else {
+            valArray.push({
+                name: `${checkmoji} ${cName.toUpperCase()}\n`,
+                value: `[${classicon}](${charUrl})\n[[ARMORY](${armoryUrl})]\nLast Bosskill\n${
+                    temp2.data[0].boss_kills.creature_name
+                }\n${
+                    temp2.data[0].boss_kills.mode === 5 ? "Heroic" : "Normal"
+                }\n${date.toLocaleString("sk-SK", {
+                    timeZone: "Europe/Bratislava",
+                })}\n\n--------`,
+                inline: true,
+            });
+        }
+    }
 
     valArray.sort(compareRows);
 
@@ -1262,8 +1435,6 @@ async function getID(chars, raidString, idBed, freeOnly) {
         let more = idBeds[idBedIndex].fields.length % 3;
         for (let index = 0; index < 3 - more; index++) {
             idBeds[idBedIndex].fields.push({
-                //name: `--=TOBEESTABLISHED=--\n`,
-                //value: `\n\u2800\n**A character**\n**could be here**\n**if you stopped**\n**being lazy and**\n**made one.**\n\u2800\n\u2800\n--------`,
                 name: "=====EMPTY=====",
                 value: "```\n+---------------+\n|               |\n|               |\n|               |\n|               |\n|               |\n|               |\n+---------------+```",
                 inline: true,
@@ -1272,7 +1443,6 @@ async function getID(chars, raidString, idBed, freeOnly) {
     }
 
     idBeds[idBedIndex].timestamp = Date.now();
-
     return idBeds;
 }
 
@@ -1282,9 +1452,6 @@ async function sendRaidChars(user, uid) {
 
     let sendChars = [];
     let userChars = await getCharsById(user.id);
-    console.log(user.id);
-    console.log(uid);
-    console.log(userChars);
 
     let john = new MessageSelectMenu()
         .setCustomId(`33-${uid}`)
@@ -1417,7 +1584,6 @@ async function findChar(id, char) {
     let query = `SELECT * FROM \`toons\` WHERE \`character\` = '${char}' AND \`discordid\` = '${id}'`;
     try {
         const x = await execute(query);
-        console.log("DATABASE FINDCHAR THINGI", x);
         if (x.length === 0) {
             return false;
         } else {
@@ -1483,54 +1649,47 @@ async function getIlvl(char) {
     return Math.round(parseFloat(ilvl));
 }
 
-async function getCharClass(char) {
+function getCharClass(char) {
     let toonUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${char}&realm=Helios`;
-    let classID;
-    let classSpec1;
-    let classSpec2;
-    let ilvl;
-    await axios
+    return axios
         .get(toonUrl)
         .catch((error) => {
             if (error.message.includes("unescaped")) {
                 sprava.channel.send("```Nauč sa písať ty mongol.```");
             } else if (error.message.includes("403")) {
                 sprava.channel.send("```Nepíš sem sračky plox.```");
+            } else {
+                console.log("unrelated error", error);
             }
         })
-        .then(async function (response) {
-            try {
-                classID = response.data.class;
-                classSpec1 =
-                    response.data.talents.talentTree[0].name ?? undefined;
-                classSpec2 =
-                    response.data.talents.talentTree[1].name ?? undefined;
-                ilvl = Math.round(response.data.averageItemLevel) ?? undefined;
-                return {
-                    classID: classID,
-                    classSpec1: classSpec1,
-                    classSpec2: classSpec2,
-                    ilvl: ilvl,
+        .then((res) => res.data)
+        .then((response) => {
+            const gear = response.equipment.reduce((agg, curr) => {
+                agg[curr.slot] = {
+                    id: curr.id,
+                    name: esc(curr.name),
                 };
-            } catch (e) {
-                if (e.name == "TypeError") {
-                    console.log(e);
-                    classID = -1;
-                    return {
-                        classID,
-                        classSpec1: undefined,
-                        classSpec2: undefined,
-                        ilvl: -1,
-                    };
-                }
-            }
+                return agg;
+            }, {});
+
+            return {
+                classID: response.class,
+                classSpec1: response.talents.talentTree[0].name ?? undefined,
+                classSpec2: response.talents.talentTree[1].name ?? undefined,
+                ilvl: Math.round(response.averageItemLevel) ?? undefined,
+                gear,
+            };
+        })
+        .catch((e) => {
+            console.log(e);
+            return {
+                classID: -1,
+                classSpec1: undefined,
+                classSpec2: undefined,
+                ilvl: -1,
+                gear: [],
+            };
         });
-    return {
-        classID: classID,
-        classSpec1: classSpec1,
-        classSpec2: classSpec2,
-        ilvl: ilvl,
-    };
 }
 
 function esc(str) {
@@ -1677,7 +1836,6 @@ bot.on("ready", async () => {
     if (!testerUsers) {
         testerUsers = [];
     }
-    console.log(testerUsers);
 
     classes.forEach(async (classe) => {
         classe[1] = await emoguild?.emojis?.cache.find(
@@ -1731,8 +1889,6 @@ bot.on("ready", async () => {
             allRaids.push(row);
         });
     }
-
-    console.log(allRaids);
 
     const commands = [
         new SlashCommandBuilder()
@@ -1948,6 +2104,7 @@ bot.on("ready", async () => {
                     .setName("character")
                     .setDescription("the name of your character")
                     .setRequired(true)
+                    .setAutocomplete(true)
             ),
         new SlashCommandBuilder()
             .setName("update")
@@ -1968,30 +2125,35 @@ bot.on("ready", async () => {
                     .setName("character")
                     .setDescription("the name of your character")
                     .setRequired(true)
+                    .setAutocomplete(true)
             )
             .addStringOption((option) =>
                 option
                     .setName("character2")
                     .setDescription("the name of your character")
                     .setRequired(false)
+                    .setAutocomplete(true)
             )
             .addStringOption((option) =>
                 option
                     .setName("character3")
                     .setDescription("the name of your character")
                     .setRequired(false)
+                    .setAutocomplete(true)
             )
             .addStringOption((option) =>
                 option
                     .setName("character4")
                     .setDescription("the name of your character")
                     .setRequired(false)
+                    .setAutocomplete(true)
             )
             .addStringOption((option) =>
                 option
                     .setName("character5")
                     .setDescription("the name of your character")
                     .setRequired(false)
+                    .setAutocomplete(true)
             ),
         new SlashCommandBuilder()
             .setName("id")
@@ -2322,7 +2484,6 @@ bot.on("ready", async () => {
                 channelt.type == "GUILD_TEXT"
         );
         if (raidChannel) {
-            console.log(`'${raidChannel.id}'`);
             raidRoomMap.push(raidChannel);
         }
     });
@@ -2352,7 +2513,6 @@ bot.on("channelUpdate", async (oldChannel, newChannel) => {
         let indx = raidRoomMap.findIndex(findValue);
 
         if (indx != undefined && indx > -1) {
-            console.log("IMHERE");
             raidRoomMap.splice(indx, 1);
         }
         raidRoomMap.sort(compareNames);
@@ -2525,6 +2685,36 @@ bot.on("interactionCreate", async (interaction) => {
         return;
     }
 
+    if (
+        interaction.commandName === "bis" ||
+        interaction.commandName === "removechar"
+    ) {
+        const antiFilter = interaction.options.data
+            .filter((el) => !el?.focused)
+            .map((el) => el.value);
+        interaction.respond(
+            (await getCharsById(interaction.user.id))
+                .filter((el) =>
+                    el.character
+                        .toLowerCase()
+                        .includes(
+                            interaction.options.getFocused().toLowerCase()
+                        )
+                )
+                .filter((el) => !antiFilter.includes(el.character))
+                .map((el) => {
+                    return {
+                        name: `${el.character
+                            .charAt(0)
+                            .toUpperCase()}${el.character.substring(1)}`,
+                        value: el.character,
+                        description: "Your character",
+                        emoji: classes[el.classid - 1][1],
+                    };
+                })
+        );
+        return;
+    }
     let cguild = interaction.guild.id;
     let gqueue = musicQueue.get(cguild);
     let qsongs = gqueue.songs;
@@ -2767,10 +2957,7 @@ bot.on("interactionCreate", async (interaction) => {
             }
 
             if (add) {
-                console.log(playingDuration);
-                console.log(seek);
                 seek = playingDuration + seek;
-                console.log(seek);
             }
 
             if (remove) {
@@ -2809,7 +2996,6 @@ bot.on("interactionCreate", async (interaction) => {
         //MUSIC REMOVE
         if (options?.getSubcommand() == "remove") {
             let rm = options.getString("song");
-            console.log(rm);
 
             let rmIndex = gqueue.songs.findIndex((song) => song.url == rm);
             let rmIndexPlayed = gqueue.played.findIndex(
@@ -3048,8 +3234,6 @@ bot.on("interactionCreate", async (interaction) => {
                     return;
                 }
 
-                console.log(pl);
-
                 url = pl.videos[0].url;
 
                 musicBed.description = `Playlist added: ${pl.title}`;
@@ -3252,7 +3436,7 @@ bot.on("interactionCreate", async (interaction) => {
 
         if (options.getString("character")) {
             queryFull.push(
-                addCharacter(
+                await addCharacter(
                     options.getString("character").toLowerCase(),
                     user,
                     addBed
@@ -3261,7 +3445,7 @@ bot.on("interactionCreate", async (interaction) => {
         }
         if (options.getString("character2")) {
             queryFull.push(
-                addCharacter(
+                await addCharacter(
                     options.getString("character2").toLowerCase(),
                     user,
                     addBed
@@ -3270,7 +3454,7 @@ bot.on("interactionCreate", async (interaction) => {
         }
         if (options.getString("character3")) {
             queryFull.push(
-                addCharacter(
+                await addCharacter(
                     options.getString("character3").toLowerCase(),
                     user,
                     addBed
@@ -3279,7 +3463,7 @@ bot.on("interactionCreate", async (interaction) => {
         }
         if (options.getString("character4")) {
             queryFull.push(
-                addCharacter(
+                await addCharacter(
                     options.getString("character4").toLowerCase(),
                     user,
                     addBed
@@ -3288,7 +3472,7 @@ bot.on("interactionCreate", async (interaction) => {
         }
         if (options.getString("character5")) {
             queryFull.push(
-                addCharacter(
+                await addCharacter(
                     options.getString("character5").toLowerCase(),
                     user,
                     addBed
@@ -3296,12 +3480,26 @@ bot.on("interactionCreate", async (interaction) => {
             );
         }
 
-        await Promise.all(queryFull).then(async function (response) {
-            await interaction.reply({
-                embeds: [addBed],
-                ephemeral: true,
-            });
+        await interaction.deferReply({
+            ephemeral: true,
         });
+        console.time("query loop");
+        for (const q of queryFull) {
+            await q;
+        }
+        console.timeEnd("query loop");
+
+        await interaction.editReply({
+            embeds: [addBed],
+            ephemeral: true,
+        });
+
+        // await Promise.all(queryFull).then(async function (response) {
+        //     await interaction.reply({
+        //         embeds: [addBed],
+        //         ephemeral: true,
+        //     });
+        // });
     }
 
     if (commandName === "snapshot") {
@@ -3343,10 +3541,10 @@ bot.on("interactionCreate", async (interaction) => {
             timestamp: Date.now(),
             footer: {
                 icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-                text: "powered by SMObot",
+                text: "powered by BISmobot",
             },
             author: {
-                name: "ID Manager",
+                name: "BIS Manager",
                 icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
             },
             fields: [],
@@ -3355,48 +3553,41 @@ bot.on("interactionCreate", async (interaction) => {
 
         const char = options.getString("character").toLowerCase();
 
-        const gear = JSON.parse(
-            allChars.find((el) => el.character == char).gear
-        ).gear;
+        if (!findChar(user, char)) {
+            await interaction.reply({
+                content: "NOEXIST",
+                ephemeral: false,
+            });
+            return;
+        }
 
-        const palaBis = [
-            { slot: "0", id: 78693 },
-            { slot: "1", id: 77090 },
-            { slot: "2", id: 78465 },
-            { slot: "3", id: 0 },
-            { slot: "4", id: 78727 },
-            { slot: "5", id: 78416 },
-            { slot: "6", id: 78712 },
-            { slot: "7", id: 78389 },
-            { slot: "8", id: 78373 },
-            { slot: "9", id: 78675 },
-            { slot: "10", id: 71215 },
-            { slot: "11", id: 78432 },
-            { slot: "12", id: 77997 },
-            { slot: "13", id: 77992 },
-            { slot: "14", id: 77097 },
-            { slot: "15", id: 78478 },
-            { slot: "16", id: 0 },
-            { slot: "17", id: 0 },
-            { slot: "18", id: 69210 },
-        ];
+        const foundChar = allChars.find((el) => el.character == char);
+        const gear = JSON.parse(foundChar?.gear)?.gear;
 
-        let dif = [];
+        log(bislist);
+        log(foundChar);
+        const bis = bislist[`7-Elemental`];
 
-        palaBis.forEach((el) => {
-            if (gear[el.slot].id !== el.id) {
-                dif.push(el);
+        Object.entries(gear).forEach(([key, value]) => {
+            if (gear[key].id !== bis[key]) {
+                bisBed.fields.push({
+                    name: slots[key],
+                    value: "```diff" + "\n-" + value.name + "\n```",
+                    inline: true,
+                });
             }
         });
 
-        if (dif.length === 0) {
+        console.log(bisBed.fields);
+
+        if (bisBed.fields.length === 0) {
             await interaction.reply({
                 content: "BIS",
                 ephemeral: false,
             });
         } else {
             await interaction.reply({
-                content: JSON.stringify(dif),
+                embeds: [bisBed],
                 ephemeral: false,
             });
         }
@@ -3560,15 +3751,12 @@ bot.on("interactionCreate", async (interaction) => {
         if (options.getString("raid") == "msv") {
             eRaid = "Mogu'shan Vaults";
             eDesc += " Mogu'shan Vaults";
-            raidString = "msv-statistic',";
         } else if (options.getString("raid") == "hof") {
             eRaid = "Heart of Fear";
             eDesc += "Heart of Fear";
-            raidString = "hof-statistic',";
         } else if (options.getString("raid") == "toes") {
             eRaid = "Terrace of Endless Spring";
             eDesc += "Terrace of Endless Spring";
-            raidString = "toes-statistic',";
         }
 
         if (options.getString("class")) {
@@ -3641,12 +3829,11 @@ bot.on("interactionCreate", async (interaction) => {
                 }
                 let idBeds = await getID(
                     charMap,
-                    raidString,
+                    eRaid,
                     idBed,
                     options.getBoolean("freeonly")
                 );
-                console.log("SRACKA");
-                console.log(idBeds);
+                log(idBeds);
                 idBeds.forEach((element) => {
                     publ(pb, element);
                 });
@@ -3676,8 +3863,10 @@ bot.on("interactionCreate", async (interaction) => {
                 }
             }
 
-            idBed = await getID(charMap, raidString, idBed, false);
-            publ(pb, idBed[0]);
+            idBed = await getID(charMap, eRaid, idBed, false);
+            interaction.reply({
+                content: "hehe",
+            });
             return;
         }
 
@@ -3769,8 +3958,6 @@ bot.on("interactionCreate", async (interaction) => {
         });
 
         roomBed.fields.push(pole);
-
-        console.log(roomBed);
 
         if (options.getString("day"))
             raidBed.fields.push({
@@ -4251,7 +4438,6 @@ bot.on("interactionCreate", async (interaction) => {
                 };
 
                 if (options.getString("day")) {
-                    console.log("DAYYY");
                     let stringsToday = ["dnes", "dneska"];
                     let stringsTomorrow = ["zajtra", "zejtra"];
 
@@ -4306,9 +4492,6 @@ bot.on("interactionCreate", async (interaction) => {
                 ) {
                     await interaction.reply(raidObject.timestamp.toString());
                 } else {
-                    console.log(raidObject.timestamp);
-                    console.log(day);
-                    console.log(time);
                     await interaction.reply("WRONG TIME/DATE FORMAT");
                     return;
                 }
@@ -4521,7 +4704,6 @@ bot.on("interactionCreate", async (interaction) => {
                 rlMember.roles.add(role);
 
                 raidObject.timestamp = timestamp;
-                console.log(JSON.stringify(raidObject));
 
                 let uId = raidLeaderId;
                 let uName = raidLeader.username;
@@ -4641,15 +4823,15 @@ bot.on("interactionCreate", async (interaction) => {
 
         guildMenu.setMinValues(1).setMaxValues(raidRoomMap.length);
 
-        const linkButton = await new MessageActionRow().addComponents(
+        const linkButton = new MessageActionRow().addComponents(
             new MessageButton()
                 .setLabel("Direct Message")
                 .setURL("discord://-/users/" + raidLeader)
                 .setStyle("LINK")
         );
 
-        const row = await new MessageActionRow().addComponents(guildMenu);
-        const buttons = await new MessageActionRow().addComponents(
+        const row = new MessageActionRow().addComponents(guildMenu);
+        const buttons = new MessageActionRow().addComponents(
             new MessageButton()
                 .setCustomId("ALL")
                 .setLabel("Send to all")
@@ -4702,18 +4884,12 @@ bot.on("interactionCreate", async (interaction) => {
         });
 
         collectorInter.on("collect", async (i) => {
+            collectorInter.stop();
+            console.log(i.customId, i.replied, i.message);
+            console.log(interaction.replied, interaction.message);
             if (i.customId.includes("DELETE")) {
-                collectorInter.stop();
                 raid.description = `${checkmoji} DELETED ${checkmoji}`;
-                await i.update({
-                    embeds: [raid],
-                    components: [],
-                    ephemeral: true,
-                });
-                return;
-            }
-
-            if (i.customId.includes("ALL")) {
+            } else if (i.customId.includes("ALL")) {
                 raidRoomMap.forEach((channel) => {
                     channel
                         .send({
@@ -4723,28 +4899,23 @@ bot.on("interactionCreate", async (interaction) => {
                         })
                         .catch(console.error);
                 });
-                collectorInter.stop();
                 raid.description = `${checkmoji} SENT TO ALL ${checkmoji}`;
-                await i.update({
-                    embeds: [raid],
-                    components: [],
-                    ephemeral: true,
-                });
-                return;
+            } else {
+                raid.description = `${checkmoji} SENT TO SELECTED CHANNELS ${checkmoji}`;
+                raidRoomMap
+                    .filter((channel) => i.values.includes(channel.id))
+                    .forEach((filteredChan) =>
+                        filteredChan.send({
+                            content: "@everyone",
+                            embeds: [raidBed],
+                            components: [linkButton],
+                        })
+                    );
             }
 
-            raid.description = `${checkmoji} SENT TO SELECTED CHANNELS ${checkmoji}`;
-            collectorInter.stop();
-            raidRoomMap
-                .filter((channel) => i.values.includes(channel.id))
-                .forEach((filteredChan) =>
-                    filteredChan.send({
-                        content: "@everyone",
-                        embeds: [raidBed],
-                        components: [linkButton],
-                    })
-                );
-            await i.update({ embeds: [raid], components: [], ephemeral: true });
+            await interaction
+                .editReply({ embeds: [raid], components: [], ephemeral: true })
+                .catch(console.error);
         });
     }
 });
@@ -4822,7 +4993,6 @@ bot.on("messageCreate", async (sprava) => {
         let collector = msg.createReactionCollector({ filter, time: 0 });
 
         collector.on("collect", (reaction, user) => {
-            console.log(reaction);
             let mem = reaction.message.guild.members.cache.find(
                 (m) => m.id == user.id
             );
@@ -4838,14 +5008,11 @@ bot.on("messageCreate", async (sprava) => {
     }
 
     async function editMessage(min, time, breakBed) {
-        console.log(min);
         time = `${min} seconds`;
         breakBed.description = `Break ends in : \`\`\`${time}\`\`\``;
         if (min > 0) {
-            console.log("here");
             await messageTime.edit({ embeds: [breakBed] });
         } else {
-            console.log("shouldstop");
             breakBed.description = `\`\`\`BREAK ENDED\`\`\``;
             await messageTime.edit({ embeds: [breakBed] });
             messageTime.channel.send("@everyone");
@@ -4985,7 +5152,6 @@ bot.on("voiceStateUpdate", async (oldMember, newMember) => {
                 })
                 .then(async (ro) => {
                     roomRole = ro;
-                    console.log(ro.name);
 
                     if (
                         nUser.roles.cache.find(
@@ -5142,7 +5308,6 @@ bot.on("voiceStateUpdate", async (oldMember, newMember) => {
                     });
 
                     if (roleFetch) {
-                        console.log(roomRole.id);
                         await roleFetch?.delete().catch(console.error);
                     }
                 }
@@ -5189,8 +5354,6 @@ bot.on("voiceStateUpdate", async (oldMember, newMember) => {
                 ).members.size < 1
             ) {
                 if (oldRoomRole) {
-                    console.log(oldRoomRole.name);
-                    console.log("bam");
                     oldRoomRole.delete().catch(console.error);
                 }
                 delay(500).then(() =>
@@ -5250,7 +5413,6 @@ bot.on("voiceStateUpdate", async (oldMember, newMember) => {
                 })
                 .then(async (ro) => {
                     let roomRole = ro;
-                    console.log(ro.name);
 
                     if (
                         nUser.roles.cache.find(
