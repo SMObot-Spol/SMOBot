@@ -3863,9 +3863,15 @@ bot.on("interactionCreate", async (interaction) => {
                 }
             }
 
-            idBed = await getID(charMap, eRaid, idBed, false);
-            interaction.reply({
-                content: "hehe",
+            if (options.getBoolean("public") == true) {
+                pb = true;
+            }
+
+            const embeds = await getID(charMap, eRaid, idBed, false);
+            log(embeds);
+            interaction.editReply({
+                embeds,
+                ephemeral: !pb,
             });
             return;
         }
