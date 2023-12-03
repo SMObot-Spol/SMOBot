@@ -4983,7 +4983,7 @@ bot.on("messageCreate", async (sprava) => {
 				text: "powered by SMObot",
 			},
 			image: {
-				url: `https://robohash.org/${seed}?set=set4`,
+				url: `https://robohash.org/${encodeURIComponent(seed)}?set=set4`,
 			},
 			author: {
 				name: "CAT Manager",
