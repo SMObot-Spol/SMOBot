@@ -4972,7 +4972,8 @@ bot.on("messageCreate", async (sprava) => {
 		);
 	}
 	if (sprava.content.startsWith("!randomcat")) {
-		const seed = sprava.content.split(" ")[1] ?? Date.now();
+		const [_, ...seedBase] =sprava.content.split(" ")
+		const seed = seedBase.join(" ") || Date.now() //if no seed was provided, empty string will fallback to current time 
 		const catBed = {
 			title: "Random kitty",
 			color: 7419530,
