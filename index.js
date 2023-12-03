@@ -4972,8 +4972,19 @@ bot.on("messageCreate", async (sprava) => {
 		);
 	}
 	if (sprava.content.startsWith("!randomcat")) {
-		const [_, ...seedBase] =sprava.content.split(" ")
-		const seed = seedBase.join(" ") || Date.now() //if no seed was provided, empty string will fallback to current time 
+		const sets = {
+			bot:"set1",
+			alien:"set2",
+			cat:"set4",
+			human:"set5"
+		}
+		let set = "set4"
+		const [cmd,...rest] = sprava.content.split(" ")
+		if(rest[rest.length -1] in  sets){
+			const tmpSet = rest.pop()
+			set = sets[tmpSet]
+		}
+		const seed = rest.join(" ") || Date.now() //if no seed was provided, empty string will fallback to current time 
 		const catBed = {
 			title: "Random kitty",
 			color: 7419530,
@@ -4983,7 +4994,7 @@ bot.on("messageCreate", async (sprava) => {
 				text: "powered by SMObot",
 			},
 			image: {
-				url: `https://robohash.org/${encodeURIComponent(seed)}?set=set4`,
+				url: `https://robohash.org/${encodeURIComponent(seed)}?set=${set}`,
 			},
 			author: {
 				name: "CAT Manager",
