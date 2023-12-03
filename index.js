@@ -4902,6 +4902,16 @@ bot.on("messageCreate", async (sprava) => {
 		sprava.channel.send({ files: [gif.images.fixed_height.url] });
 	}
 
+	if (sprava.content.toLowerCase() == "🐤") {
+		let gif = await gifSearch("baby chick");
+		sprava.channel.send({ files: [gif.images.fixed_height.url] });
+	}
+
+	if (sprava.content.toLowerCase() == "🐟") {
+		let gif = await gifSearch("fish");
+		sprava.channel.send({ files: [gif.images.fixed_height.url] });
+	}
+
 	if (sprava.content.toLowerCase().includes("!gibtest")) {
 		let msg = await sprava.channel.send("REACT WITH CHECKMARK TO GET ROLE");
 		await msg.react("✅").catch(console.error);
