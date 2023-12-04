@@ -25,7 +25,9 @@ const {
 	MessageSelectMenu,
 	InteractionCollector,
 	Interaction,
+	Collection,
 } = require("discord.js");
+const { Routes } = require("discord-api-types/v9");
 const { channel } = require("diagnostics_channel");
 const bot = new Client({
 	intents: [
@@ -38,6 +40,10 @@ const bot = new Client({
 		Intents.FLAGS.GUILD_INTEGRATIONS,
 	],
 });
+
+const { REST } = require("@discordjs/rest");
+
+const raidRoomManager = require("./raidRoomManager");
 
 let musicQueue = new Map();
 var testerUsers = [];
@@ -1774,8 +1780,7 @@ function compareRows(a, b) {
 	return 0;
 }
 
-var collectorMap = new Map();
-var raidRoomMap = [];
+var collectorMap = require("./collectorManager");
 
 function delay(time) {
 	return new Promise((resolve) => setTimeout(resolve, time));
@@ -1784,7 +1789,9 @@ function delay(time) {
 let emoguild = "";
 
 bot.on("ready", async () => {
-	bot.user.setActivity("SMObot je láska", { type: "PLAYING" });
+	bot.user.setActivity(process.env.STATUS_MSG ?? "SMObot je láska", {
+		type: "PLAYING",
+	});
 
 	const text = `
     CREATE TABLE IF NOT EXISTS \`toons\` (
@@ -1807,8 +1814,6 @@ bot.on("ready", async () => {
 		SlashCommandBuilder,
 		ContextMenuCommandBuilder,
 	} = require("@discordjs/builders");
-	const { REST } = require("@discordjs/rest");
-	const { Routes } = require("discord-api-types/v9");
 
 	emoguild = bot.guilds.cache.get(process.env.EMOJIID);
 	testguild = bot.guilds.cache.get(process.env.TESTID);
@@ -1879,420 +1884,6 @@ bot.on("ready", async () => {
 		});
 	}
 
-	const commands = [
-		new SlashCommandBuilder()
-			.setName("music")
-			.setDescription("Play some music")
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("play")
-					.setDescription("plays a song")
-					.addStringOption((option) =>
-						option
-							.setName("song")
-							.setDescription("the song url/name")
-							.setRequired(true)
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("seek")
-					.setDescription("plays a song")
-					.addStringOption((option) =>
-						option
-							.setName("time")
-							.setDescription("time to seek to")
-							.setRequired(true)
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand.setName("prev").setDescription("play previous song")
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("playnext")
-					.setDescription("plays a song as next in queue")
-					.addStringOption((option) =>
-						option
-							.setName("song")
-							.setDescription("the song url/name")
-							.setRequired(true)
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("remove")
-					.setDescription("removes a song from the queue")
-					.addStringOption((option) =>
-						option
-							.setName("song")
-							.setDescription("the song url/name")
-							.setRequired(true)
-							.setAutocomplete(true)
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("autoplay")
-					.setDescription("plays similar songs automatically")
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("loop")
-					.setDescription("loop song or queue")
-					.addStringOption((option) =>
-						option
-							.setName("type")
-							.setDescription("the raid you are assembling")
-							.setRequired(true)
-							.addChoice("No loop", "0")
-							.addChoice("Song", "1")
-							.addChoice("Queue", "2")
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("queue")
-					.setDescription("posts the queue of the player")
-					.addIntegerOption((option) =>
-						option
-							.setName("page")
-							.setDescription("page of the queue")
-							.setRequired(false)
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand.setName("stop").setDescription("stops the player")
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("skip")
-					.setDescription("skips currently playing song")
-			)
-			.addSubcommand((subcommand) =>
-				subcommand.setName("pause").setDescription("pause the music")
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("continue")
-					.setDescription("continue playing the music")
-			),
-		new SlashCommandBuilder()
-			.setName("lfm")
-			.setDescription(
-				"Creates a raid announce to be sent to subscribed guilds."
-			)
-			.addStringOption((option) =>
-				option
-					.setName("raid")
-					.setDescription("the raid you are assembling")
-					.setRequired(true)
-					.addChoice("Terrace of Endless Spring", "TOES")
-					.addChoice("Heart of Fear", "HOF")
-					.addChoice("Mogu'shan Vaults", "MSV")
-			)
-			.addStringOption((option) =>
-				option
-					.setName("hc")
-					.setDescription("Number of heroic bosses")
-					.setRequired(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("roles")
-					.setDescription("What you are looking for")
-					.setRequired(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("time")
-					.setDescription("When is the raid happening")
-					.setRequired(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("day")
-					.setDescription("What day is the raid on")
-					.setRequired(false)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("info")
-					.setDescription("Loot info or other details")
-					.setRequired(false)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("size")
-					.setDescription("10/25 man")
-					.setRequired(false)
-					.addChoice("10", "10m")
-					.addChoice("25", "25m")
-			)
-			.addUserOption((option) =>
-				option
-					.setName("leader")
-					.setDescription("The Raid Leader (if it's not you)")
-					.setRequired(false)
-			),
-		new SlashCommandBuilder()
-			.setName("addchar")
-			.setDescription("Adds WOW character into a database of your characters")
-			.addStringOption((option) =>
-				option
-					.setName("character")
-					.setDescription("the name of your character")
-					.setRequired(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character2")
-					.setDescription("the name of your character")
-					.setRequired(false)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character3")
-					.setDescription("the name of your character")
-					.setRequired(false)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character4")
-					.setDescription("the name of your character")
-					.setRequired(false)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character5")
-					.setDescription("the name of your character")
-					.setRequired(false)
-			)
-			.addUserOption((option) =>
-				option
-					.setName("userid")
-					.setDescription("the user you want to add character to")
-					.setRequired(false)
-			),
-		new SlashCommandBuilder()
-			.setName("snapshot")
-			.setDescription("Snapshots your currently equipped gear")
-			.addStringOption((option) =>
-				option
-					.setName("character")
-					.setDescription("the name of your character")
-					.setRequired(true)
-			),
-		new SlashCommandBuilder()
-			.setName("bis")
-			.setDescription("Find out what items you need to achiev BIS")
-			.addStringOption((option) =>
-				option
-					.setName("character")
-					.setDescription("the name of your character")
-					.setRequired(true)
-					.setAutocomplete(true)
-			),
-		new SlashCommandBuilder()
-			.setName("update")
-			.setDescription("Update Characters")
-			.addStringOption((option) =>
-				option
-					.setName("character")
-					.setDescription("the name of your character")
-					.setRequired(false)
-			),
-		new SlashCommandBuilder()
-			.setName("removechar")
-			.setDescription(
-				"Removes a WOW character from a database of your characters"
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character")
-					.setDescription("the name of your character")
-					.setRequired(true)
-					.setAutocomplete(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character2")
-					.setDescription("the name of your character")
-					.setRequired(false)
-					.setAutocomplete(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character3")
-					.setDescription("the name of your character")
-					.setRequired(false)
-					.setAutocomplete(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character4")
-					.setDescription("the name of your character")
-					.setRequired(false)
-					.setAutocomplete(true)
-			)
-			.addStringOption((option) =>
-				option
-					.setName("character5")
-					.setDescription("the name of your character")
-					.setRequired(false)
-					.setAutocomplete(true)
-			),
-		new SlashCommandBuilder()
-			.setName("id")
-			.setDescription("Get raid lock statistics of your characters")
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("all")
-					.setDescription("all of your characters from the database")
-					.addStringOption((option) =>
-						option
-							.setName("raid")
-							.setDescription("the raid you want lockout status for")
-							.addChoice("Terrace of Endless Spring", "toes")
-							.addChoice("Heart of Fear", "hof")
-							.addChoice("Mogu'shan Vaults", "msv")
-							.setRequired(true)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("position")
-							.setDescription("raid position")
-							.addChoice("🛡️ TANK 🛡️", "tank")
-							.addChoice("💊 HEAL 💊", "heal")
-							.addChoice("💀 DPS 💀", "dps")
-							.addChoice("🔪 OFFTANK 🛡️", "offtank")
-							.addChoice("⚔️ MDPS ⚔️", "mdps")
-							.addChoice("🎯 RDPS 🎯", "rdps")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("class")
-							.setDescription("character class")
-							.addChoice("⚔️ Warrior ⚔️", "1")
-							.addChoice("😇 Paladin 😇", "2")
-							.addChoice("🏹 Hunter 🏹", "3")
-							.addChoice("🗡️ Rogue 🗡️", "4")
-							.addChoice("⛪ Priest ⛪", "5")
-							.addChoice("🩸 Death Knight 🩸", "6")
-							.addChoice("⚡ Shaman ⚡", "7")
-							.addChoice("🎲 Mage 🎲", "8")
-							.addChoice("👿 Warlock 👿", "9")
-							.addChoice("🐻 Druid 🐻", "11")
-							.setRequired(false)
-					)
-					.addBooleanOption((option) =>
-						option
-							.setName("freeonly")
-							.setDescription(
-								"whether or not to show only characters with free id"
-							)
-							.setRequired(false)
-					)
-					.addBooleanOption((option) =>
-						option
-							.setName("public")
-							.setDescription(
-								"whether or not you want to make the output publicly visible"
-							)
-							.setRequired(false)
-					)
-					.addUserOption((option) =>
-						option
-							.setName("userid")
-							.setDescription("the user you want bosskills from")
-							.setRequired(false)
-					)
-			)
-			.addSubcommand((subcommand) =>
-				subcommand
-					.setName("character")
-					.setDescription("single character")
-					.addStringOption((option) =>
-						option
-							.setName("raid")
-							.setDescription("the raid you want lockout status for")
-							.addChoice("Terrace of Endless Spring", "toes")
-							.addChoice("Heart of Fear", "hof")
-							.addChoice("Mogu'shan Vaults", "msv")
-							.setRequired(true)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character")
-							.setDescription("your character name")
-							.setRequired(true)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character1")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character2")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character3")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character4")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character5")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character6")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character7")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character8")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addStringOption((option) =>
-						option
-							.setName("character9")
-							.setDescription("your character name")
-							.setRequired(false)
-					)
-					.addBooleanOption((option) =>
-						option
-							.setName("public")
-							.setDescription(
-								"whether or not you want to make the output publicly visible"
-							)
-							.setRequired(false)
-					)
-			),
-	].map((command) => command.toJSON());
-
 	const testcommands = [
 		new ContextMenuCommandBuilder().setName("play").setType(3),
 		new SlashCommandBuilder()
@@ -2361,19 +1952,19 @@ bot.on("ready", async () => {
 
 	const rest = new REST({ version: "9" }).setToken(process.env.DTOKEN);
 
-	(async () => {
-		try {
-			console.log("Started refreshing application (/) commands.");
+	// (async () => {
+	// 	try {
+	// 		console.log("Started refreshing application (/) commands.");
 
-			await rest.put(Routes.applicationCommands(clientId), {
-				body: commands,
-			});
+	// 		await rest.put(Routes.applicationCommands(clientId), {
+	// 			body: commands,
+	// 		});
 
-			console.log("Successfully reloaded application (/) commands.");
-		} catch (error) {
-			console.error(error);
-		}
-	})();
+	// 		console.log("Successfully reloaded application (/) commands.");
+	// 	} catch (error) {
+	// 		console.error(error);
+	// 	}
+	// })();
 
 	(async () => {
 		try {
@@ -2456,43 +2047,30 @@ bot.on("ready", async () => {
 				channelt.name.toLowerCase() == "raidy" && channelt.type == "GUILD_TEXT"
 		);
 		if (raidChannel) {
-			raidRoomMap.push(raidChannel);
+			raidRoomManager.addRoom(raidChannel);
 		}
 	});
 });
-
 bot.on("channelCreate", async (channel) => {
 	if (channel.name.toLowerCase() == "raidy") {
-		raidRoomMap.push(channel);
-		raidRoomMap.sort(compareNames);
+		raidRoomManager.addRoom(chanel);
 	}
 });
 
 bot.on("channelDelete", async (channel) => {
 	if (channel.name.toLowerCase() == "raidy") {
-		const findValue = (element) => element == channel;
-		let indx = raidRoomMap.findIndex(findValue);
-		if (indx != undefined && indx > -1) {
-			raidRoomMap.splice(indx, 1);
-		}
-		raidRoomMap.sort(compareNames);
+		raidRoomManager.removeRoom(channel);
 	}
 });
 
 bot.on("channelUpdate", async (oldChannel, newChannel) => {
 	if (oldChannel.name.toLowerCase() == "raidy") {
-		const findValue = (element) => element.id == oldChannel.id;
-		let indx = raidRoomMap.findIndex(findValue);
-
-		if (indx != undefined && indx > -1) {
-			raidRoomMap.splice(indx, 1);
-		}
-		raidRoomMap.sort(compareNames);
+		// const findValue = (element) => element.id == oldChannel.id;
+		raidRoomManager.removeRoom(oldChannel);
 	}
 
 	if (newChannel.name.toLowerCase() == "raidy") {
-		raidRoomMap.push(newChannel);
-		raidRoomMap.sort(compareNames);
+		raidRoomManager.addRoom(newChannel);
 	}
 });
 
@@ -3893,10 +3471,10 @@ bot.on("interactionCreate", async (interaction) => {
 			chars: [],
 		};
 
-		raidRoomMap.sort(compareNames);
+		raidRoomManager.sort();
 
-		raidRoomMap.forEach((channel) => {
-			pole.value += `\`${raidRoomMap.indexOf(channel)}:\`   **${
+		raidRoomManager.raidRoomMap.forEach((channel) => {
+			pole.value += `\`${raidRoomManager.raidRoomMap.indexOf(channel)}:\`   **${
 				channel.guild.name
 			}**\n`;
 		});
@@ -3964,7 +3542,7 @@ bot.on("interactionCreate", async (interaction) => {
 			);
 
 			if (splitCollected.includes("ALL")) {
-				raidRoomMap.forEach((channel) => {
+				raidRoomManager.raidRoomMap.forEach((channel) => {
 					if (
 						raidLeader == "504719213815136276" &&
 						channel.guild.id == "916662678049652738"
@@ -3986,15 +3564,16 @@ bot.on("interactionCreate", async (interaction) => {
 
 			splitCollected.forEach(async (ele) => {
 				let raidId;
-				if (raidRoomMap[parseInt(ele, 10)]) {
+				if (raidRoomManager.raidRoomMap[parseInt(ele, 10)]) {
 					collector.stop();
 					if (
 						raidLeader == "504719213815136276" &&
-						raidRoomMap[parseInt(ele, 10)].guild.id == "916662678049652738"
+						raidRoomManager.raidRoomMap[parseInt(ele, 10)].guild.id ==
+							"916662678049652738"
 					) {
 						console.log(raidLeader + "stuff");
 					} else {
-						raidId = await raidRoomMap[parseInt(ele, 10)]
+						raidId = await raidRoomManager.raidRoomMap[parseInt(ele, 10)]
 							.send({
 								content: "@everyone",
 								embeds: [raidBed],
@@ -4659,182 +4238,38 @@ bot.on("interactionCreate", async (interaction) => {
 			}
 		}
 	}
+});
 
-	if (commandName === "lfm") {
-		if (options.getString("raid").toLowerCase() == "toes") {
-			raidImage =
-				"https://static.wikia.nocookie.net/wowpedia/images/7/7e/Terrace_of_Endless_Spring_loading_screen.jpg";
-			raidName = "Terrace of Endless Spring";
-		} else if (options.getString("raid").toLowerCase() == "hof") {
-			raidImage =
-				"https://static.wikia.nocookie.net/wowpedia/images/0/0b/Heart_of_Fear_loading_screen.jpg";
-			raidName = "Heart of Fear";
-		} else if (options.getString("raid").toLowerCase() == "msv") {
-			raidImage =
-				"https://static.wikia.nocookie.net/wowpedia/images/9/9a/Mogu%27shan_Vaults_loading_screen.jpg";
-			raidName = "Mogu'shan Vaults";
-		}
+bot.on("interactionCreate", async (interaction) => {
+	if (!interaction.isCommand() && !interaction.isContextMenu()) return;
 
-		if (options.getString("size"))
-			raidName = raidName + " " + options.getString("size");
+	const command = interaction.client.commands.get(interaction.commandName);
 
-		let raidLeader = interaction.user.id;
+	if (!command) {
+		console.error(`No command matching ${interaction.commandName} was found.`);
+		return;
+	}
 
-		if (options.getUser("leader")) {
-			raidLeader = options.getUser("leader").id;
-		}
-
-		const raidBed = {
-			title: raidName,
-			description: `by **${bot.users.cache.get(raidLeader).tag}**`,
-			color: 7419530,
-			timestamp: Date.now(),
-			footer: {
-				icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-				text: "powered by SMObot",
-			},
-			image: {
-				url: raidImage,
-			},
-			author: {
-				name: "RAID Manager",
-				icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-			},
-			fields: [
-				{
-					name: "HC :",
-					value: options.getString("hc"),
-					inline: true,
-				},
-				{
-					name: "Looking for :",
-					value: options.getString("roles"),
-					inline: true,
-				},
-			],
-		};
-
-		const raid = {
-			description: "BLA",
-		};
-
-		raidRoomMap.sort(compareNames);
-
-		let guildMenu = new MessageSelectMenu()
-			.setCustomId(`custom-${interaction.user.id}`)
-			.setPlaceholder("Nothing selected");
-
-		raidRoomMap.forEach(async (raidRoom) => {
-			let gemoji = await emoguild.emojis.cache.find(
-				(emoji) =>
-					emoji.name ==
-					raidRoom.guild.name
-						.replace(/[^a-zA-Z ]/g, "")
-						.toUpperCase()
-						.split(" ")[0]
-			);
-			guildMenu.addOptions({
-				label: `${raidRoom.guild.name}\n`,
-				value: raidRoom.id,
-				emoji: gemoji,
-			});
-		});
-
-		guildMenu.setMinValues(1).setMaxValues(raidRoomMap.length);
-
-		const linkButton = new MessageActionRow().addComponents(
-			new MessageButton()
-				.setLabel("Direct Message")
-				.setURL("discord://-/users/" + raidLeader)
-				.setStyle("LINK")
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(
+			`Something went wrong when running the "${interaction.commandName}" command.`
 		);
-
-		const row = new MessageActionRow().addComponents(guildMenu);
-		const buttons = new MessageActionRow().addComponents(
-			new MessageButton()
-				.setCustomId("ALL")
-				.setLabel("Send to all")
-				.setStyle("PRIMARY"),
-			new MessageButton()
-				.setCustomId("DELETE")
-				.setLabel("Delete")
-				.setStyle("DANGER")
-		);
-
-		if (options.getString("day"))
-			raidBed.fields.push({
-				name: "Day : ",
-				value: options.getString("day"),
+		console.error(error);
+		//check if interaction is deferred
+		if (interaction.deferred) {
+			//edit the original response
+			await interaction.editReply({
+				content: "⚠️ There was an error while executing this command!",
+				ephemeral: true,
 			});
-		raidBed.fields.push({
-			name: "Time : ",
-			value: options.getString("time"),
-		});
-		if (options.getString("info"))
-			raidBed.fields.push({
-				name: "Additional Info: ",
-				value: options.getString("info"),
+		} else {
+			await interaction.reply({
+				content: "⚠️ There was an error while executing this command!",
+				ephemeral: true,
 			});
-
-		await interaction.reply({
-			embeds: [raidBed],
-			components: [row, buttons],
-			ephemeral: true,
-		});
-
-		if (collectorMap.has(interaction.user)) {
-			if (collectorMap.get(interaction.user)) {
-				collectorMap.get(interaction.user).stop();
-			}
-			collectorMap.delete(interaction.user);
 		}
-
-		const filterInter = (i) => i.user.id === interaction.user.id;
-		const collectorInter = interaction.channel.createMessageComponentCollector({
-			filterInter,
-			time: 300000,
-		});
-
-		collectorMap.set(interaction.user, collectorInter);
-
-		collectorInter.on("end", () => {
-			collectorMap.delete(interaction.user);
-		});
-
-		collectorInter.on("collect", async (i) => {
-			collectorInter.stop();
-			console.log(i.customId, i.replied, i.message);
-			console.log(interaction.replied, interaction.message);
-			if (i.customId.includes("DELETE")) {
-				raid.description = `${checkmoji} DELETED ${checkmoji}`;
-			} else if (i.customId.includes("ALL")) {
-				raidRoomMap.forEach((channel) => {
-					channel
-						.send({
-							content: "@everyone",
-							embeds: [raidBed],
-							components: [linkButton],
-						})
-						.catch(console.error);
-				});
-				raid.description = `${checkmoji} SENT TO ALL ${checkmoji}`;
-			} else {
-				raid.description = `${checkmoji} SENT TO SELECTED CHANNELS ${checkmoji}`;
-				raidRoomMap
-					.filter((channel) => i.values.includes(channel.id))
-					.forEach((filteredChan) =>
-						filteredChan.send({
-							content: "@everyone",
-							embeds: [raidBed],
-							components: [linkButton],
-						})
-					);
-			}
-
-			await interaction
-				.editReply({ embeds: [raid], components: [], ephemeral: true })
-				.catch(console.error);
-		});
 	}
 });
 
@@ -5455,5 +4890,50 @@ bot.on("voiceStateUpdate", async (oldMember, newMember) => {
 		}
 	}
 });
+const fs = require("fs");
+const path = require("path");
+bot.login(process.env.DTOKEN).then(async () => {
+	bot.commands = new Collection();
+	const commands = [];
+	// Grab all the command files from the commands directory you created earlier
+	const commandFiles = fs
+		.readdirSync("./commands")
+		.filter((file) => file.endsWith(".js"));
 
-bot.login(process.env.DTOKEN);
+	for (const file of commandFiles) {
+		const filePath = path.join(__dirname, "commands", file);
+		const command = require(filePath);
+		if ("data" in command && "execute" in command) {
+			commands.push(command.data.toJSON());
+			bot.commands.set(command.data.name, command);
+		} else {
+			console.log(
+				`[WARNING] The command at "${filePath}" is missing a required "data" and/or "execute" property.`
+			);
+		}
+	}
+
+	// Construct and prepare an instance of the REST module
+	const rest = new REST({ version: "9" }).setToken(process.env.DTOKEN);
+	try {
+		console.log(
+			`Started refreshing ${commands.length} application (/) commands.`
+		);
+
+		// The put method is used to fully refresh all commands in the guild with the current set
+		const data = await rest.put(
+			Routes.applicationCommands(process.env.CLIENTID),
+			{ body: commands }
+		);
+
+		console.log(
+			`Successfully reloaded ${data.length} application (/) commands.`
+		);
+	} catch (err) {
+		console.error(
+			"Something went wrong when registering the Slash Commands. Try again later."
+		);
+		console.error(err);
+		process.exit(1);
+	}
+});

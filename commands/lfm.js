@@ -1,0 +1,259 @@
+const { SlashCommandBuilder } = require("@discordjs/builders");
+const {
+	MessageSelectMenu,
+	MessageActionRow,
+	MessageButton,
+} = require("discord.js");
+const footer = require("../constants/smobotFooter");
+const { raidManager } = require("../constants/managers");
+const raidRoomManager = require("../raidRoomManager");
+const collectorMap = require("../collectorManager");
+const collectorManager = require("../collectorManager");
+
+const optionsNames = {
+	raid: "raid",
+	hc: "hc",
+	roles: "roles",
+	time: "time",
+	day: "day",
+	info: "info",
+	size: "size",
+	leader: "leader",
+};
+
+const raidChoices = {
+	toes: {
+		id: "TOES",
+		name: "Terrace of Endless Spring",
+		img: "7/7e/Terrace_of_Endless_Spring_loading_screen.jpg",
+	},
+	hof: {
+		id: "HOF",
+		name: "Heart of Fear",
+		img: "0/0b/Heart_of_Fear_loading_screen.jpg",
+	},
+	msv: {
+		id: "MSV",
+		name: "Mogu'shan Vaults",
+		img: "9/9a/Mogu%27shan_Vaults_loading_screen.jpg",
+	},
+};
+
+const data = new SlashCommandBuilder()
+	.setName("lfm")
+	.setDescription("Creates a raid announce to be sent to subscribed guilds.")
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.raid)
+			.setDescription("the raid you are assembling")
+			.setRequired(true)
+			.addChoice(raidChoices.toes.name, raidChoices.toes.id)
+			.addChoice(raidChoices.hof.name, raidChoices.hof.id)
+			.addChoice(raidChoices.msv.name, raidChoices.msv.id)
+	)
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.hc)
+			.setDescription("Number of heroic bosses")
+			.setRequired(true)
+	)
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.roles)
+			.setDescription("What you are looking for")
+			.setRequired(true)
+	)
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.time)
+			.setDescription("When is the raid happening")
+			.setRequired(true)
+	)
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.day)
+			.setDescription("What day is the raid on")
+			.setRequired(false)
+	)
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.info)
+			.setDescription("Loot info or other details")
+			.setRequired(false)
+	)
+	.addStringOption((option) =>
+		option
+			.setName(optionsNames.size)
+			.setDescription("10/25 man")
+			.setRequired(false)
+			.addChoice("10", "10m")
+			.addChoice("25", "25m")
+	)
+	.addUserOption((option) =>
+		option
+			.setName(optionsNames.leader)
+			.setDescription("The Raid Leader (if it's not you)")
+			.setRequired(false)
+	);
+
+/**
+ *
+ * @param {import("discord.js").CommandInteraction} interaction
+ */
+async function execute(interaction) {
+	//#region setup vars
+	const options = interaction.options;
+	const raidID = options.getString(optionsNames.raid).toLowerCase();
+	const raidImage = `https://static.wikia.nocookie.net/wowpedia/images/${raidChoices[raidID].img}`;
+	const raidSize = options.getString(optionsNames.size);
+	const iUser = interaction.user;
+	const raidLeader = (options.getUser(optionsNames.leader) ?? iUser).id;
+	const guildmoji = interaction.client.guilds.cache.get(process.env.EMOJIID);
+	const checkmoji = guildmoji.emojis.cache.find(
+		(emoji) => emoji.name === "TIMEY"
+	);
+
+	let raidName = raidChoices[raidID].name;
+
+	if (raidSize) raidName = `${raidName} ${raidSize}`;
+	//#endregion
+	const raidBed = {
+		title: raidName,
+		description: `by **${interaction.client.users.cache.get(raidLeader).tag}**`,
+		color: 7419530,
+		timestamp: Date.now(),
+		footer,
+		image: {
+			url: raidImage,
+		},
+		author: raidManager,
+		fields: [
+			{
+				name: "HC :",
+				value: options.getString(optionsNames.hc),
+				inline: true,
+			},
+			{
+				name: "Looking for :",
+				value: options.getString(optionsNames.roles),
+				inline: true,
+			},
+		],
+	};
+
+	raidRoomManager.sort();
+
+	const guildMenu = new MessageSelectMenu()
+		.setCustomId(`custom-${iUser.id}`)
+		.setPlaceholder("Nothing selected")
+		.setOptions(
+			raidRoomManager.raidRoomMap.map((room) => ({
+				label: `${raidRoom.guild.name}\n`,
+				value: room.id,
+				emoji: guildmoji.emojis.cache.find(
+					(emoji) =>
+						emoji.name ==
+						room.guild.name
+							.replace(/[^a-zA-Z ]/g, "")
+							.toUpperCase()
+							.split(" ")[0]
+				),
+			}))
+		)
+		.setMinValues(1)
+		.setMaxValues(raidRoomManager.raidRoomMap.length);
+
+	const row = new MessageActionRow().addComponents(guildMenu);
+	const buttons = new MessageActionRow().addComponents(
+		new MessageButton()
+			.setCustomId("ALL")
+			.setLabel("Send to all")
+			.setStyle("PRIMARY"),
+		new MessageButton()
+			.setCustomId("DELETE")
+			.setLabel("Delete")
+			.setStyle("DANGER")
+	);
+
+	if (options.getString(optionsNames.day))
+		raidBed.fields.push({
+			name: "Day : ",
+			value: options.getString(optionsNames.day),
+		});
+	raidBed.fields.push({
+		name: "Time : ",
+		value: options.getString(optionsNames.time),
+	});
+	if (options.getString(optionsNames.info))
+		raidBed.fields.push({
+			name: "Additional Info: ",
+			value: options.getString(optionsNames.info),
+		});
+
+	await interaction.reply({
+		embeds: [raidBed],
+		components: [row, buttons],
+		ephemeral: true,
+	});
+
+	collectorManager.stopAndDelete(interaction.user);
+
+	const collectorInter = interaction.channel.createMessageComponentCollector({
+		filter: (i) => i.user.id === interaction.user.id,
+		time: 300000,
+	});
+
+	collectorManager.set(interaction.user, collectorInter);
+
+	collectorInter.on("end", () => {
+		collectorManager.delete(interaction.user);
+	});
+
+	collectorInter.on("collect", async (i) => {
+		collectorManager.stopAndDelete(interaction.user);
+
+		const linkButton = new MessageActionRow().addComponents(
+			new MessageButton()
+				.setLabel("Direct Message")
+				.setURL("discord://-/users/" + raidLeader)
+				.setStyle("LINK")
+		);
+
+		const raid = {
+			description: "BLA",
+		};
+
+		const notifyChannels = (filterFn) => {
+			raidRoomManager.raidRoomMap.filter(filterFn).forEach((filteredChan) =>
+				filteredChan.send({
+					content: "@everyone",
+					embeds: [raidBed],
+					components: [linkButton],
+				})
+			);
+		};
+
+		switch (i.customId) {
+			case "DELETE": {
+				raid.description = `${checkmoji} DELETED ${checkmoji}`;
+				break;
+			}
+			case "ALL": {
+				raid.description = `${checkmoji} SENT TO ALL ${checkmoji}`;
+				notifyChannels(() => true);
+				break;
+			}
+			default: {
+				raid.description = `${checkmoji} SENT TO SELECTED CHANNELS ${checkmoji}`;
+				notifyChannels((channel) => i.values.includes(channel.id));
+				break;
+			}
+		}
+
+		await interaction
+			.editReply({ embeds: [raid], components: [], ephemeral: true })
+			.catch(console.error);
+	});
+}
+
+module.exports = { data, execute };
