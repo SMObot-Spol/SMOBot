@@ -11,5 +11,5 @@ jobs:
         with:
           url: "https://control.sparkedhost.us/api/client/servers/29562251/power"
           method: "POST"
-          customHeaders: '{"Content-Type": "application/json", "Accept": "application/json", "Authorization": `Bearer ${{ secrets.SPARKEDKEY }}`}'
+          customHeaders: '{"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer ${{ secrets.SPARKEDKEY }}"}'
           data: '{"signal": "restart"}'
