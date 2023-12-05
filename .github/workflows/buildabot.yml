@@ -17,7 +17,11 @@ jobs:
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORDWEBHOOK }}
-          embeds:
-            '[{"title":"PUSH Manager","description":"New version of SMOBOT is running","color": "7419530", timestamp: ${{ github.event.repository.updated_at}}, "footer": {"icon_url": "https://i.ibb.co/vs7BpgP/ss.png",
-            "text": "powered by SMObot"},"author": {"name": "PUSH Manager (BETA)",
-            "icon_url": "https://i.ibb.co/vs7BpgP/ss.png"} }]'
+          embed-title: "PUSH Manager"
+          embed-description: "New version of SMOBOT is running"
+          embed-color: 7419530
+          embed-timestamp: ${{ github.event.repository.updated_at}}
+          embed-footer-icon-url: "https://i.ibb.co/vs7BpgP/ss.png"
+          embed-footer-text: "powered by APIBot"
+          embed-author-name: "PUSH Manager (BETA)"
+          embed-author-icon-url: "https://i.ibb.co/vs7BpgP/ss.png"
