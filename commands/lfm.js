@@ -7,7 +7,6 @@ const {
 const footer = require("../constants/smobotFooter");
 const { raidManager } = require("../constants/managers");
 const raidRoomManager = require("../raidRoomManager");
-const collectorMap = require("../collectorManager");
 const collectorManager = require("../collectorManager");
 
 const optionsNames = {
@@ -38,62 +37,51 @@ const raidChoices = {
 		img: "9/9a/Mogu%27shan_Vaults_loading_screen.jpg",
 	},
 };
+/**
+ * @param {import("@discordjs/builders").SlashCommandStringOption | import("@discordjs/builders").SlashCommandUserOption} option
+ * @param {string} name
+ * @param {string} desc
+ * @param {boolean} required
+ */
+const optionBase = (option, name, desc, required = true) =>
+	option.setName(name).setDescription(desc).setRequired(required);
 
 const data = new SlashCommandBuilder()
 	.setName("lfm")
 	.setDescription("Creates a raid announce to be sent to subscribed guilds.")
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.raid)
-			.setDescription("the raid you are assembling")
-			.setRequired(true)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.raid, "the raid you are assembling")
 			.addChoice(raidChoices.toes.name, raidChoices.toes.id)
 			.addChoice(raidChoices.hof.name, raidChoices.hof.id)
 			.addChoice(raidChoices.msv.name, raidChoices.msv.id)
 	)
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.hc)
-			.setDescription("Number of heroic bosses")
-			.setRequired(true)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.hc, "Number of heroic bosses")
 	)
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.roles)
-			.setDescription("What you are looking for")
-			.setRequired(true)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.roles, "What you are looking for")
 	)
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.time)
-			.setDescription("When is the raid happening")
-			.setRequired(true)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.time, "When is the raid happening")
 	)
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.day)
-			.setDescription("What day is the raid on")
-			.setRequired(false)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.day, "What day is the raid on", false)
 	)
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.info)
-			.setDescription("Loot info or other details")
-			.setRequired(false)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.info, "Loot info or other details", false)
 	)
-	.addStringOption((option) =>
-		option
-			.setName(optionsNames.size)
-			.setDescription("10/25 man")
-			.setRequired(false)
+	.addStringOption((o) =>
+		optionBase(o, optionsNames.size, "10/25 man", false)
 			.addChoice("10", "10m")
 			.addChoice("25", "25m")
 	)
-	.addUserOption((option) =>
-		option
-			.setName(optionsNames.leader)
-			.setDescription("The Raid Leader (if it's not you)")
-			.setRequired(false)
+	.addUserOption((o) =>
+		optionBase(
+			o,
+			optionsNames.leader,
+			"The Raid Leader (if it's not you)",
+			false
+		)
 	);
 
 /**
@@ -112,58 +100,47 @@ async function execute(interaction) {
 	const checkmoji = guildmoji.emojis.cache.find(
 		(emoji) => emoji.name === "TIMEY"
 	);
-
-	let raidName = raidChoices[raidID].name;
-
-	if (raidSize) raidName = `${raidName} ${raidSize}`;
+	const raidName = raidSize
+		? `${raidChoices[raidID].name} ${raidSize}`
+		: raidChoices[raidID].name;
 	//#endregion
-	const raidBed = {
-		title: raidName,
-		description: `by **${interaction.client.users.cache.get(raidLeader).tag}**`,
-		color: 7419530,
-		timestamp: Date.now(),
-		footer,
-		image: {
-			url: raidImage,
+	const raidBedFields = [
+		{
+			name: "HC :",
+			value: options.getString(optionsNames.hc),
+			inline: true,
 		},
-		author: raidManager,
-		fields: [
-			{
-				name: "HC :",
-				value: options.getString(optionsNames.hc),
-				inline: true,
-			},
-			{
-				name: "Looking for :",
-				value: options.getString(optionsNames.roles),
-				inline: true,
-			},
-		],
-	};
+		{
+			name: "Looking for :",
+			value: options.getString(optionsNames.roles),
+			inline: true,
+		},
+	];
 
 	raidRoomManager.sort();
 
-	const guildMenu = new MessageSelectMenu()
-		.setCustomId(`custom-${iUser.id}`)
-		.setPlaceholder("Nothing selected")
-		.setOptions(
-			raidRoomManager.raidRoomMap.map((room) => ({
-				label: `${raidRoom.guild.name}\n`,
-				value: room.id,
-				emoji: guildmoji.emojis.cache.find(
-					(emoji) =>
-						emoji.name ==
-						room.guild.name
-							.replace(/[^a-zA-Z ]/g, "")
-							.toUpperCase()
-							.split(" ")[0]
-				),
-			}))
-		)
-		.setMinValues(1)
-		.setMaxValues(raidRoomManager.raidRoomMap.length);
+	const guildMenu = new MessageActionRow().addComponents(
+		new MessageSelectMenu()
+			.setCustomId(`custom-${iUser.id}`)
+			.setPlaceholder("Nothing selected")
+			.setOptions(
+				raidRoomManager.rooms.map((room) => ({
+					label: `${raidRoom.guild.name}\n`,
+					value: room.id,
+					emoji: guildmoji.emojis.cache.find(
+						(emoji) =>
+							emoji.name ==
+							room.guild.name
+								.replace(/[^a-zA-Z ]/g, "")
+								.toUpperCase()
+								.split(" ")[0]
+					),
+				}))
+			)
+			.setMinValues(1)
+			.setMaxValues(raidRoomManager.rooms.length)
+	);
 
-	const row = new MessageActionRow().addComponents(guildMenu);
 	const buttons = new MessageActionRow().addComponents(
 		new MessageButton()
 			.setCustomId("ALL")
@@ -176,34 +153,45 @@ async function execute(interaction) {
 	);
 
 	if (options.getString(optionsNames.day))
-		raidBed.fields.push({
+		raidBedFields.push({
 			name: "Day : ",
 			value: options.getString(optionsNames.day),
 		});
-	raidBed.fields.push({
+	raidBedFields.push({
 		name: "Time : ",
 		value: options.getString(optionsNames.time),
 	});
 	if (options.getString(optionsNames.info))
-		raidBed.fields.push({
+		raidBedFields.push({
 			name: "Additional Info: ",
 			value: options.getString(optionsNames.info),
 		});
 
+	const raidBed = {
+		title: raidName,
+		description: `by **${interaction.client.users.cache.get(raidLeader).tag}**`,
+		color: 7419530,
+		timestamp: Date.now(),
+		footer,
+		image: {
+			url: raidImage,
+		},
+		author: raidManager,
+		fields: raidBedFields,
+	};
+
 	await interaction.reply({
 		embeds: [raidBed],
-		components: [row, buttons],
+		components: [guildMenu, buttons],
 		ephemeral: true,
 	});
 
 	collectorManager.stopAndDelete(interaction.user);
 
-	const collectorInter = interaction.channel.createMessageComponentCollector({
-		filter: (i) => i.user.id === interaction.user.id,
-		time: 300000,
-	});
-
-	collectorManager.set(interaction.user, collectorInter);
+	const collectorInter = collectorManager.create(
+		interaction,
+		(i) => i.user.id === interaction.user.id
+	);
 
 	collectorInter.on("end", () => {
 		collectorManager.delete(interaction.user);
@@ -224,7 +212,7 @@ async function execute(interaction) {
 		};
 
 		const notifyChannels = (filterFn) => {
-			raidRoomManager.raidRoomMap.filter(filterFn).forEach((filteredChan) =>
+			raidRoomManager.rooms.filter(filterFn).forEach((filteredChan) =>
 				filteredChan.send({
 					content: "@everyone",
 					embeds: [raidBed],

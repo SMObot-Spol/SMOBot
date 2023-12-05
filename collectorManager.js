@@ -63,6 +63,22 @@ class CollectorManager {
 
 		this.get(key)?.stop();
 	}
+	/**
+	 *
+	 * @param {import("discord.js").CommandInteraction} interaction
+	 * @param {import("discord.js").CollectorFilter<[import("discord.js").MessageComponentInteraction]>} filter
+	 * @param {import("discord.js").User} key
+	 * @param {number} time
+	 * @returns
+	 */
+	create(interaction, filter, key = interaction.user, time = 300000) {
+		const collector = interaction.channel.createMessageComponentCollector({
+			filter,
+			time,
+		});
+		this.set(key, collector);
+		return collector;
+	}
 }
 
 module.exports = new CollectorManager();
