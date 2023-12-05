@@ -43,7 +43,7 @@ const bot = new Client({
 
 const { REST } = require("@discordjs/rest");
 
-const raidRoomManager = require("./raidRoomManager");
+const raidRoomManager = require("./managers/raidRoom");
 
 let musicQueue = new Map();
 var testerUsers = [];
@@ -192,13 +192,6 @@ async function prev(gqueue, cguild, cchan) {
 	updatePlaying(gqueue, cguild);
 	return;
 }
-
-var dbConfig = {
-	host: process.env.DB_HOST,
-	user: process.env.DB_USER,
-	password: process.env.DB_PASS,
-	database: process.env.DB_TABLE,
-};
 
 async function stop(gqueue, cguild) {
 	try {
@@ -887,105 +880,6 @@ async function updateCharacter(char, uid, addBed) {
 		});
 		return addBed;
 	}
-	return addBed;
-}
-
-async function addCharacter(char, uid, addBed) {
-	char = char.toLowerCase();
-
-	var charExist = await findChar(uid, char);
-
-	if (charExist) {
-		addBed.fields.push({
-			name: `${crossmoji} ${char.toUpperCase()}\n`,
-			value: "\n**Postava už**\n**je zaregistrovana**\n",
-			inline: true,
-		});
-		return addBed;
-	}
-
-	var { classID, ilvl, classSpec1, classSpec2, gear } = await getCharClass(
-		char
-	);
-
-	if (classID == -1) {
-		addBed.fields.push({
-			name: `${crossmoji} ${char.toUpperCase()}\n`,
-			value: "\n**Postava**\n**neexistuje**\n",
-			inline: true,
-		});
-		return addBed;
-	}
-
-	//TODO TOTO SA ASI DA NARAZ ???
-	var ilvl = ilvl;
-
-	if (isNaN(ilvl)) {
-		ilvl = 0;
-	}
-
-	var tank = false;
-	var mdmg = false;
-	var rdmg = false;
-	var heal = false;
-
-	var classSpecCombo1 = `${classID}-${classSpec1}`;
-	var classSpecCombo2 = `${classID}-${classSpec2}`;
-
-	if (tanks.includes(classSpecCombo1) || tanks.includes(classSpecCombo2)) {
-		tank = true;
-	}
-
-	if (heals.includes(classSpecCombo1) || heals.includes(classSpecCombo2)) {
-		heal = true;
-	}
-
-	if (mdps.includes(classSpecCombo1) || mdps.includes(classSpecCombo2)) {
-		mdmg = true;
-	}
-
-	if (rdps.includes(classSpecCombo1) || rdps.includes(classSpecCombo2)) {
-		rdmg = true;
-	}
-
-	var addQuery = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear`;
-	const gearData = JSON.stringify(gear);
-
-	const queryParams = [
-		uid,
-		char.toLowerCase(),
-		tank ? 1 : 0,
-		heal ? 1 : 0,
-		mdmg ? 1 : 0,
-		rdmg ? 1 : 0,
-		classID,
-		ilvl,
-		gearData,
-	];
-
-	const queryString = mysql.createQuery(addQuery, queryParams);
-
-	let exe = await execute(queryString, true);
-
-	if (exe) {
-		exe.forEach((row) => {
-			allChars.push(row);
-		});
-	}
-
-	if (exe == "DBERROR") {
-		addBed.fields.push({
-			name: `${crossmoji} ${char.toUpperCase()}\n`,
-			value: "\n**DATABASE**\n**ERROR**\n",
-			inline: true,
-		});
-		return addBed;
-	}
-	addBed.fields.push({
-		name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
-		value: "\n**Postava bola**\n**pridaná**\n**do databáze**\n",
-		inline: true,
-	});
 	return addBed;
 }
 
@@ -1780,7 +1674,7 @@ function compareRows(a, b) {
 	return 0;
 }
 
-var collectorMap = require("./collectorManager");
+var collectorMap = require("./managers/collector");
 
 function delay(time) {
 	return new Promise((resolve) => setTimeout(resolve, time));
@@ -2923,104 +2817,6 @@ bot.on("interactionCreate", async (interaction) => {
 			updatePlaying(gqueue, cguild);
 			return;
 		}
-	}
-
-	if (commandName === "addchar") {
-		let user = interaction.user.id;
-		if (options.getUser("userid")) {
-			if (user === "319128664291672085") {
-				user = options.getUser("userid").id;
-			} else {
-				await interaction.reply({
-					content: "NONO",
-					ephemeral: true,
-				});
-				return;
-			}
-		}
-		let addBed = {
-			title: "ADD Character",
-			description: `Your character add query returned :`,
-			color: 7419530,
-			timestamp: Date.now(),
-			footer: {
-				icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-				text: "powered by SMObot",
-			},
-			author: {
-				name: "ID Manager",
-				icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
-			},
-			fields: [],
-		};
-		let queryFull = [];
-
-		if (options.getString("character")) {
-			queryFull.push(
-				await addCharacter(
-					options.getString("character").toLowerCase(),
-					user,
-					addBed
-				)
-			);
-		}
-		if (options.getString("character2")) {
-			queryFull.push(
-				await addCharacter(
-					options.getString("character2").toLowerCase(),
-					user,
-					addBed
-				)
-			);
-		}
-		if (options.getString("character3")) {
-			queryFull.push(
-				await addCharacter(
-					options.getString("character3").toLowerCase(),
-					user,
-					addBed
-				)
-			);
-		}
-		if (options.getString("character4")) {
-			queryFull.push(
-				await addCharacter(
-					options.getString("character4").toLowerCase(),
-					user,
-					addBed
-				)
-			);
-		}
-		if (options.getString("character5")) {
-			queryFull.push(
-				await addCharacter(
-					options.getString("character5").toLowerCase(),
-					user,
-					addBed
-				)
-			);
-		}
-
-		await interaction.deferReply({
-			ephemeral: true,
-		});
-		console.time("query loop");
-		for (const q of queryFull) {
-			await q;
-		}
-		console.timeEnd("query loop");
-
-		await interaction.editReply({
-			embeds: [addBed],
-			ephemeral: true,
-		});
-
-		// await Promise.all(queryFull).then(async function (response) {
-		//     await interaction.reply({
-		//         embeds: [addBed],
-		//         ephemeral: true,
-		//     });
-		// });
 	}
 
 	if (commandName === "snapshot") {

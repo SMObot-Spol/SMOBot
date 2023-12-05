@@ -6,8 +6,9 @@ const {
 } = require("discord.js");
 const footer = require("../constants/smobotFooter");
 const { raidManager } = require("../constants/managers");
-const raidRoomManager = require("../raidRoomManager");
-const collectorManager = require("../collectorManager");
+const raidRoomManager = require("../managers/raidRoom");
+const collectorManager = require("../managers/collector");
+const { optionBase } = require("../helpers/commands");
 
 const optionsNames = {
 	raid: "raid",
@@ -37,14 +38,6 @@ const raidChoices = {
 		img: "9/9a/Mogu%27shan_Vaults_loading_screen.jpg",
 	},
 };
-/**
- * @param {import("@discordjs/builders").SlashCommandStringOption | import("@discordjs/builders").SlashCommandUserOption} option
- * @param {string} name
- * @param {string} desc
- * @param {boolean} required
- */
-const optionBase = (option, name, desc, required = true) =>
-	option.setName(name).setDescription(desc).setRequired(required);
 
 const data = new SlashCommandBuilder()
 	.setName("lfm")
