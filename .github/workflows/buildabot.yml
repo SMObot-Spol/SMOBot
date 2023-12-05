@@ -17,11 +17,11 @@ jobs:
         uses: tsickert/discord-webhook@v5.3.0
         with:
           webhook-url: ${{ secrets.DISCORDWEBHOOK }}
-          embed-title: "PUSH Manager"
-          embed-description: "New version of SMOBOT is running"
-          embed-color: 7419530
+          embed-title: "Somebody is COOKIN"
+          embed-description: "Version ${{ github.run_id }} of SMOBOT is now running"
+          embed-color: 15844367
           embed-timestamp: ${{ github.event.repository.updated_at}}
           embed-footer-icon-url: "https://i.ibb.co/vs7BpgP/ss.png"
           embed-footer-text: "powered by APIBot"
-          embed-author-name: "PUSH Manager (BETA)"
+          embed-author-name: "PUSH Manager"
           embed-author-icon-url: "https://i.ibb.co/vs7BpgP/ss.png"
