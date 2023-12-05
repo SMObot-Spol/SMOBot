@@ -13,3 +13,8 @@ jobs:
           method: "POST"
           customHeaders: '{"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer ${{ secrets.SPARKEDKEY }}"}'
           data: '{"signal": "restart"}'
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORDWEBHOOK }}
+          content: "Test"
