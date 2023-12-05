@@ -1,0 +1,15 @@
+name: Run bot
+run-name: Re-run bot when new code is added 🚀
+on: [push]
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy SparkedHost
+        if: github.ref == 'refs/heads/main'
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: "https://control.sparkedhost.us/api/client/servers/29562251/power"
+          method: "POST"
+          customHeaders: '{"Content-Type": "application/json", "Accept": "application/json", "Authorization": `Bearer ${{ secrets.SPARKEDKEY }}`}'
+          data: '{"signal": "restart"}'
