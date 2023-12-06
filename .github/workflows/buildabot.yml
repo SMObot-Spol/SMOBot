@@ -9,7 +9,19 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: fjogeleit/http-request-action@v1
         with:
-          url: "https://control.sparkedhost.us/api/client/servers/328dd8eb/power"
+          url: "https://control.sparkedhost.us/api/client/servers/29562251/power"
           method: "POST"
           customHeaders: '{"Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer ${{ secrets.SPARKEDKEY }}"}'
           data: '{"signal": "restart"}'
+      - name: Discord Webhook Action
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORDWEBHOOK }}
+          embed-title: "Somebody is COOKIN"
+          embed-description: "Version ${{ github.run_id }} of SMOBOT is now running: \n ${{ github.event.head_commit.message }}"
+          embed-color: 15844367
+          embed-timestamp: ${{ github.event.repository.updated_at}}
+          embed-footer-icon-url: "https://i.ibb.co/vs7BpgP/ss.png"
+          embed-footer-text: "powered by APIBot"
+          embed-author-name: "PUSH Manager"
+          embed-author-icon-url: "https://i.ibb.co/vs7BpgP/ss.png"
