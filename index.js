@@ -5275,10 +5275,10 @@ bot.on("voiceStateUpdate", async (oldMember, newMember) => {
                     }
                 });
         } else {
-            console.log("////////////////");
+            console.log("///////////////");
             console.log(newMember.member.user.username);
             console.log(newMember.channel.name);
-            console.log("////////////////");
+            console.log("///////////////");
             nUser.roles
                 .add(
                     guildis.roles.cache.find(
