@@ -5,6 +5,11 @@ const data = new SlashCommandBuilder()
 	.setDescription("TODO");
 
 /**
+ * @type {Map<string,import("discord.js").CommandInteraction>}
+ */
+const lastServerInteractions = new Map();
+
+/**
  *
  * @param {import("discord.js").CommandInteraction} interaction
  */
@@ -30,11 +35,18 @@ async function execute(interaction) {
 				break;
 			}
 			default: {
-				interaction.reply({ content: `Error: ${error}`, ephemeral: true });
+				interaction.reply({
+					content: `Error: ${error.message}`,
+					ephemeral: true,
+				});
 			}
 		}
 		return;
 	}
+	if (lastServerInteractions.has(serverId)) {
+		await lastServerInteractions.get(serverId).deleteReply();
+	}
+	lastServerInteractions.set(serverId, interaction);
 	interaction.reply(res ? "BANG" : "CLICK");
 }
 
