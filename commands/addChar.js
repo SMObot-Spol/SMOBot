@@ -1,10 +1,11 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { optionBase } = require("../helpers/commands");
+const characterManager = require("../managers/character");
 
 const charDesc = "the name of your character";
 const optionKeys = {
 	c: "character",
-	uid: "userId",
+	uid: "userid",
 };
 const maxChars = 5;
 
@@ -72,15 +73,11 @@ async function execute(interaction) {
 		fields: [],
 	};
 
-	await addCharacter(
-		options.getString(optionKeys.c).toLowerCase(),
-		user,
-		addBed
-	);
+	await addChar(options.getString(optionKeys.c).toLowerCase(), user, addBed);
 
 	for (let i = 2; i <= maxChars; i++) {
 		if (options.getString(`${optionKeys.c}${i}`)) {
-			await addCharacter(
+			await addChar(
 				options.getString(`${optionKeys.c}${i}`).toLowerCase(),
 				user,
 				addBed
@@ -93,5 +90,24 @@ async function execute(interaction) {
 		ephemeral: true,
 	});
 }
-async function addCharacter(char, uid, addBed) {}
+
+async function addChar(char, user, addBed) {
+	try {
+		await characterManager.addCharacter(
+			options.getString(optionKeys.c).toLowerCase(),
+			user
+		);
+		addBed.fields.push({
+			name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
+			value: "\n**Postava bola**\n**pridaná**\n**do databáze**\n",
+			inline: true,
+		});
+	} catch (error) {
+		addBed.fields.push({
+			name: `${crossmoji} ${char.toUpperCase()}\n`,
+			value: `\n**ERROR:**\n**${error}**\n`,
+			inline: true,
+		});
+	}
+}
 module.exports = { data, execute };

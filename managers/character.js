@@ -1,21 +1,56 @@
+const dbManager = require("./db");
+const axios = require("axios");
 class CharacterManager {
+	allChars = [];
 	/**
 	 *
 	 * @param {string} charName
 	 * @param {string} uid
 	 * @returns {Promise<boolean>}
+	 * @throws {"DBERROR"}
 	 */
 	async findChar(id, char) {
-		let query = `SELECT * FROM \`toons\` WHERE \`character\` = '${char}' AND \`discordid\` = '${id}'`;
 		try {
-			const x = await execute(query);
-			if (x.length === 0) {
-				return false;
-			} else {
-				return true;
-			}
+			const x = await dbManager.genericSelect("*", "toons", [
+				["character", char],
+				["discordid", id],
+			]);
+
+			return x.length !== 0;
 		} catch (err) {
 			console.log("Database FINDCHAR" + err);
+			throw err;
+		}
+	}
+	/**
+	 *
+	 * @param {string} charName
+	 */
+	async getCharClass(charName) {
+		let toonUrl = `https://twinstar-api.twinstar-wow.com/character/?name=${charName}&realm=Helios`;
+		let charData;
+		try {
+			charData = await axios.get(toonUrl).then((res) => res.data);
+		} catch (error) {
+			throw "API_ERROR";
+		}
+		try {
+			const gear = charData.equipment.reduce((agg, curr) => {
+				agg[curr.slot] = {
+					id: curr.id,
+					name: esc(curr.name),
+				};
+				return agg;
+			}, {});
+			return {
+				classID: charData.class,
+				classSpec1: charData.talents.talentTree[0].name ?? undefined,
+				classSpec2: charData.talents.talentTree[1].name ?? undefined,
+				ilvl: Math.round(charData.averageItemLevel) ?? undefined,
+				gear,
+			};
+		} catch (error) {
+			throw "PARSE_ERROR";
 		}
 	}
 	/**
@@ -23,36 +58,28 @@ class CharacterManager {
 	 * @param {string} charName
 	 * @param {string} uid
 	 * @returns {Promise<import("discord.js").EmbedField>}
+	 * @throws {"DBERROR" | "CHAR_ALREADY_REGISTERED" |"API_ERROR" | "PARSE_ERROR"}
 	 */
 	async addCharacter(charName, uid) {
 		const char = charName.toLowerCase();
 
-		var charExist = await findChar(uid, char);
-
-		if (charExist) {
-			addBed.fields.push({
-				name: `${crossmoji} ${char.toUpperCase()}\n`,
-				value: "\n**Postava už**\n**je zaregistrovana**\n",
-				inline: true,
-			});
-			return addBed;
+		try {
+			if (await this.findChar(uid, char)) {
+				throw "CHAR_ALREADY_REGISTERED";
+			}
+		} catch (error) {
+			throw error;
 		}
 
-		var { classID, ilvl, classSpec1, classSpec2, gear } = await getCharClass(
-			char
-		);
-
-		if (classID == -1) {
-			addBed.fields.push({
-				name: `${crossmoji} ${char.toUpperCase()}\n`,
-				value: "\n**Postava**\n**neexistuje**\n",
-				inline: true,
-			});
-			return addBed;
+		let charClass;
+		try {
+			charClass = await this.getCharClass(char);
+		} catch (error) {
+			throw error;
 		}
+		const { classID, classSpec1, classSpec2, gear } = charClass;
 
-		//TODO TOTO SA ASI DA NARAZ ???
-		var ilvl = ilvl;
+		var ilvl = charClass.ilvl;
 
 		if (isNaN(ilvl)) {
 			ilvl = 0;
@@ -82,45 +109,66 @@ class CharacterManager {
 			rdmg = true;
 		}
 
-		var addQuery = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear`;
+		// var addQuery = `INSERT INTO toons (discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, discordid, \`character\`, tank, heal, mdps, rdps, classid, ilvl, gear`;
 		const gearData = JSON.stringify(gear);
 
-		const queryParams = [
-			uid,
-			char.toLowerCase(),
-			tank ? 1 : 0,
-			heal ? 1 : 0,
-			mdmg ? 1 : 0,
-			rdmg ? 1 : 0,
-			classID,
-			ilvl,
-			gearData,
-		];
+		// const queryString = mysql.createQuery(addQuery, queryParams);
 
-		const queryString = mysql.createQuery(addQuery, queryParams);
-
-		let exe = await execute(queryString, true);
-
-		if (exe) {
-			exe.forEach((row) => {
-				allChars.push(row);
-			});
+		try {
+			const chars = await dbManager.genericInsert(
+				"toons",
+				[
+					"discordid",
+					`character`,
+					"tank",
+					"heal",
+					"mdps",
+					"rdps",
+					"classid",
+					"ilvl",
+					"gear",
+				],
+				[
+					[
+						uid,
+						char.toLowerCase(),
+						tank ? 1 : 0,
+						heal ? 1 : 0,
+						mdmg ? 1 : 0,
+						rdmg ? 1 : 0,
+						classID,
+						ilvl,
+						gearData,
+					],
+				]
+			);
+			this.allChars.push(...chars);
+		} catch (error) {
+			throw error;
 		}
 
-		if (exe == "DBERROR") {
-			addBed.fields.push({
-				name: `${crossmoji} ${char.toUpperCase()}\n`,
-				value: "\n**DATABASE**\n**ERROR**\n",
-				inline: true,
-			});
-			return addBed;
-		}
-		addBed.fields.push({
-			name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
-			value: "\n**Postava bola**\n**pridaná**\n**do databáze**\n",
-			inline: true,
-		});
-		return addBed;
+		// let exe = await execute(queryString, true);
+
+		// if (exe) {
+		// 	exe.forEach((row) => {
+		// 		allChars.push(row);
+		// 	});
+		// }
+
+		// if (exe == "DBERROR") {
+		// 	addBed.fields.push({
+		// 		name: `${crossmoji} ${char.toUpperCase()}\n`,
+		// 		value: "\n**DATABASE**\n**ERROR**\n",
+		// 		inline: true,
+		// 	});
+		// 	return addBed;
+		// }
+		// addBed.fields.push({
+		// 	name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
+		// 	value: "\n**Postava bola**\n**pridaná**\n**do databáze**\n",
+		// 	inline: true,
+		// });
+		// return addBed;
 	}
 }
 

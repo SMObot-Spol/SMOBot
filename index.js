@@ -10,7 +10,12 @@ const ytsr = require("ytsr");
 const fns = require("date-fns");
 const Voice = require("@discordjs/voice");
 const { GiphyFetch } = require("@giphy/js-fetch-api");
-
+var dbConfig = {
+	host: process.env.DB_HOST,
+	user: process.env.DB_USER,
+	password: process.env.DB_PASS,
+	database: process.env.DB_TABLE,
+};
 const bislist = require("./bislist.json");
 
 const gipi = new GiphyFetch(process.env.GIPI);
@@ -4700,6 +4705,7 @@ bot.login(process.env.DTOKEN).then(async () => {
 		const filePath = path.join(__dirname, "commands", file);
 		const command = require(filePath);
 		if ("data" in command && "execute" in command) {
+			console.log("Adding command from", filePath);
 			commands.push(command.data.toJSON());
 			bot.commands.set(command.data.name, command);
 		} else {

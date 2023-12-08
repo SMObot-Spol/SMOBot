@@ -13,9 +13,7 @@ var dbConfig = {
  */
 function promisify(fn, ...args) {
 	return new Promise((res, rej) => {
-		console.log("calling");
 		fn(...args, (err, ...data) => {
-			console.log("calback", err, data);
 			if (err) rej(err);
 			res(data);
 		});
@@ -27,6 +25,7 @@ class DBManager {
 	 * @param {string | string[]} what
 	 * @param {string} table
 	 * @param {[string,string,"AND"|"OR"|undefined][]} conditions
+	 * @throws {"DBERROR"}
 	 */
 	async genericSelect(what, table, conditions) {
 		const values = [];
@@ -55,6 +54,54 @@ class DBManager {
 			values
 		);
 
+		try {
+			return this.#run(query);
+		} catch (error) {
+			throw error;
+		}
+	}
+	/**
+	 *
+	 * @param {string} table
+	 * @param {string[]} columns
+	 * @param {string[][]} rowValues
+	 * @throws {"DBERROR"} asf
+	 */
+	async genericInsert(table, columns, rowValues) {
+		const values = [];
+		values.push(table);
+
+		let whatTemplate = "?";
+
+		const columnsTemplate = columns.map(() => "?").join(", ");
+		values.push(...columns);
+		if (Array.isArray(what)) {
+			whatTemplate = what.map((_, i) => (i === what.length - 1 ? "?" : "?, "));
+			values.push(...what);
+		} else {
+			values.push(what);
+		}
+
+		const valuesTemplate = rowValues
+			.map((row) => `(${row.map(() => "?").join(", ")})`)
+			.join(", ");
+		for (const row of rowValues) {
+			values.push(...row);
+		}
+
+		const query = mysql.format(
+			`INSERT INTO ? (${columnsTemplate}) VALUES ${valuesTemplate} RETURNING *`,
+			values
+		);
+
+		try {
+			return this.#run(query);
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	async #run(query) {
 		const client = mysql.createConnection(dbConfig);
 		try {
 			return await promisify(client.connect)
@@ -62,13 +109,12 @@ class DBManager {
 				.then(promisify(client.query, query));
 		} catch (e) {
 			await promisify(client.rollback);
-			onsole.error(err);
-			return "DBERROR";
+			console.error(err);
+			throw "DBERROR";
 		} finally {
 			client.end();
 		}
 	}
-	getChar() {}
 }
 
 module.exports = new DBManager();
