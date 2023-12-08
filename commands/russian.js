@@ -20,6 +20,7 @@ async function execute(interaction) {
 	try {
 		res = await russianManager.pullTrigger(serverId, userId);
 	} catch (error) {
+		console.error(error);
 		if (!error instanceof Error) {
 			interaction.reply({ content: `Error: ${error}`, ephemeral: true });
 			return;
@@ -44,9 +45,17 @@ async function execute(interaction) {
 		return;
 	}
 	if (lastServerInteractions.has(serverId)) {
-		await lastServerInteractions.get(serverId).deleteReply();
+		try {
+			await lastServerInteractions.get(serverId).deleteReply();
+		} catch (error) {
+			console.error(error);
+		}
 	}
-	lastServerInteractions.set(serverId, interaction);
+	try {
+		lastServerInteractions.set(serverId, interaction);
+	} catch (error) {
+		console.error(error);
+	}
 	interaction.reply(res ? "BANG" : "CLICK");
 }
 
