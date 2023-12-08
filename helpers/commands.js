@@ -1,5 +1,5 @@
 /**
- * @param {import("@discordjs/builders").SlashCommandStringOption | import("@discordjs/builders").SlashCommandUserOption} option
+ * @param {import("discord.js").SlashCommandStringOption | import("discord.js").SlashCommandUserOption} option
  * @param {string} name
  * @param {string} desc
  * @param {boolean} required

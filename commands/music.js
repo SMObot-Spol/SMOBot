@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 
 const data = new SlashCommandBuilder()
 	.setName("music")
@@ -65,9 +65,11 @@ const data = new SlashCommandBuilder()
 					.setName("type")
 					.setDescription("the raid you are assembling")
 					.setRequired(true)
-					.addChoice("No loop", "0")
-					.addChoice("Song", "1")
-					.addChoice("Queue", "2")
+					.addChoices(
+						{ name: "No loop", value: "0" },
+						{ name: "Song", value: "1" },
+						{ name: "Queue", value: "2" }
+					)
 			)
 	)
 	.addSubcommand((subcommand) =>

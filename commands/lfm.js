@@ -1,8 +1,8 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 const {
-	MessageSelectMenu,
-	MessageActionRow,
-	MessageButton,
+	StringSelectMenuBuilder,
+	ActionRowBuilder,
+	ButtonBuilder,
 } = require("discord.js");
 const footer = require("../constants/smobotFooter");
 const { raidManager } = require("../constants/managers");
@@ -43,10 +43,11 @@ const data = new SlashCommandBuilder()
 	.setName("lfm")
 	.setDescription("Creates a raid announce to be sent to subscribed guilds.")
 	.addStringOption((o) =>
-		optionBase(o, optionsNames.raid, "the raid you are assembling")
-			.addChoice(raidChoices.toes.name, raidChoices.toes.id)
-			.addChoice(raidChoices.hof.name, raidChoices.hof.id)
-			.addChoice(raidChoices.msv.name, raidChoices.msv.id)
+		optionBase(o, optionsNames.raid, "the raid you are assembling").addChoices(
+			{ name: raidChoices.toes.name, value: raidChoices.toes.id },
+			{ name: raidChoices.hof.name, value: raidChoices.hof.id },
+			{ name: raidChoices.msv.name, value: raidChoices.msv.id }
+		)
 	)
 	.addStringOption((o) =>
 		optionBase(o, optionsNames.hc, "Number of heroic bosses")
@@ -64,9 +65,10 @@ const data = new SlashCommandBuilder()
 		optionBase(o, optionsNames.info, "Loot info or other details", false)
 	)
 	.addStringOption((o) =>
-		optionBase(o, optionsNames.size, "10/25 man", false)
-			.addChoice("10", "10m")
-			.addChoice("25", "25m")
+		optionBase(o, optionsNames.size, "10/25 man", false).addChoices(
+			{ name: "10", value: "10m" },
+			{ name: "25", value: "25m" }
+		)
 	)
 	.addUserOption((o) =>
 		optionBase(
@@ -112,8 +114,8 @@ async function execute(interaction) {
 
 	raidRoomManager.sort();
 
-	const guildMenu = new MessageActionRow().addComponents(
-		new MessageSelectMenu()
+	const guildMenu = new ActionRowBuilder().addComponents(
+		new StringSelectMenuBuilder()
 			.setCustomId(`custom-${iUser.id}`)
 			.setPlaceholder("Nothing selected")
 			.setOptions(
@@ -134,12 +136,12 @@ async function execute(interaction) {
 			.setMaxValues(raidRoomManager.rooms.length)
 	);
 
-	const buttons = new MessageActionRow().addComponents(
-		new MessageButton()
+	const buttons = new ActionRowBuilder().addComponents(
+		new ButtonBuilder()
 			.setCustomId("ALL")
 			.setLabel("Send to all")
 			.setStyle("PRIMARY"),
-		new MessageButton()
+		new ButtonBuilder()
 			.setCustomId("DELETE")
 			.setLabel("Delete")
 			.setStyle("DANGER")
@@ -193,8 +195,8 @@ async function execute(interaction) {
 	collectorInter.on("collect", async (i) => {
 		collectorManager.stopAndDelete(interaction.user);
 
-		const linkButton = new MessageActionRow().addComponents(
-			new MessageButton()
+		const linkButton = new ActionRowBuilder().addComponents(
+			new ButtonBuilder()
 				.setLabel("Direct Message")
 				.setURL("discord://-/users/" + raidLeader)
 				.setStyle("LINK")

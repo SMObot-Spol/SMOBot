@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
+const { SlashCommandBuilder } = require("discord.js");
 
 ///TODO: figure out subcommands in their own files
 const data = new SlashCommandBuilder()
@@ -12,37 +12,43 @@ const data = new SlashCommandBuilder()
 				option
 					.setName("raid")
 					.setDescription("the raid you want lockout status for")
-					.addChoice("Terrace of Endless Spring", "toes")
-					.addChoice("Heart of Fear", "hof")
-					.addChoice("Mogu'shan Vaults", "msv")
+					.addChoices(
+						{ name: "Terrace of Endless Spring", value: "toes" },
+						{ name: "Heart of Fear", value: "hof" },
+						{ name: "Mogu'shan Vaults", value: "msv" }
+					)
 					.setRequired(true)
 			)
 			.addStringOption((option) =>
 				option
 					.setName("position")
 					.setDescription("raid position")
-					.addChoice("🛡️ TANK 🛡️", "tank")
-					.addChoice("💊 HEAL 💊", "heal")
-					.addChoice("💀 DPS 💀", "dps")
-					.addChoice("🔪 OFFTANK 🛡️", "offtank")
-					.addChoice("⚔️ MDPS ⚔️", "mdps")
-					.addChoice("🎯 RDPS 🎯", "rdps")
+					.addChoices(
+						{ name: "🛡️ TANK 🛡️", value: "tank" },
+						{ name: "💊 HEAL 💊", value: "heal" },
+						{ name: "💀 DPS 💀", value: "dps" },
+						{ name: "🔪 OFFTANK 🛡️", value: "offtank" },
+						{ name: "⚔️ MDPS ⚔️", value: "mdps" },
+						{ name: "🎯 RDPS 🎯", value: "rdps" }
+					)
 					.setRequired(false)
 			)
 			.addStringOption((option) =>
 				option
 					.setName("class")
 					.setDescription("character class")
-					.addChoice("⚔️ Warrior ⚔️", "1")
-					.addChoice("😇 Paladin 😇", "2")
-					.addChoice("🏹 Hunter 🏹", "3")
-					.addChoice("🗡️ Rogue 🗡️", "4")
-					.addChoice("⛪ Priest ⛪", "5")
-					.addChoice("🩸 Death Knight 🩸", "6")
-					.addChoice("⚡ Shaman ⚡", "7")
-					.addChoice("🎲 Mage 🎲", "8")
-					.addChoice("👿 Warlock 👿", "9")
-					.addChoice("🐻 Druid 🐻", "11")
+					.addChoices(
+						{ name: "⚔️ Warrior ⚔️", value: "1" },
+						{ name: "😇 Paladin 😇", value: "2" },
+						{ name: "🏹 Hunter 🏹", value: "3" },
+						{ name: "🗡️ Rogue 🗡️", value: "4" },
+						{ name: "⛪ Priest ⛪", value: "5" },
+						{ name: "🩸 Death Knight 🩸", value: "6" },
+						{ name: "⚡ Shaman ⚡", value: "7" },
+						{ name: "🎲 Mage 🎲", value: "8" },
+						{ name: "👿 Warlock 👿", value: "9" },
+						{ name: "🐻 Druid 🐻", value: "11" }
+					)
 					.setRequired(false)
 			)
 			.addBooleanOption((option) =>
@@ -74,9 +80,11 @@ const data = new SlashCommandBuilder()
 				option
 					.setName("raid")
 					.setDescription("the raid you want lockout status for")
-					.addChoice("Terrace of Endless Spring", "toes")
-					.addChoice("Heart of Fear", "hof")
-					.addChoice("Mogu'shan Vaults", "msv")
+					.addChoices(
+						{ name: "Terrace of Endless Spring", value: "toes" },
+						{ name: "Heart of Fear", value: "hof" },
+						{ name: "Mogu'shan Vaults", value: "msv" }
+					)
 					.setRequired(true)
 			)
 			.addStringOption((option) =>

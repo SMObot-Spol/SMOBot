@@ -21,28 +21,28 @@ const bislist = require("./bislist.json");
 const gipi = new GiphyFetch(process.env.GIPI);
 const {
 	Client,
-	Intents,
-	Permissions,
-	Message,
-	MessageActionRow,
-	MessageButton,
-	MessageCollector,
-	MessageSelectMenu,
-	InteractionCollector,
-	Interaction,
+	GatewayIntentBits,
+	ActionRowBuilder,
+	ButtonBuilder,
+	StringSelectMenuBuilder,
 	Collection,
+	Routes,
+	PermissionFlagsBits,
+	ChannelType,
+	Events,
 } = require("discord.js");
-const { Routes } = require("discord-api-types/v9");
+
 const { channel } = require("diagnostics_channel");
+
 const bot = new Client({
 	intents: [
-		Intents.FLAGS.GUILDS,
-		Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-		Intents.FLAGS.GUILD_MEMBERS,
-		Intents.FLAGS.DIRECT_MESSAGES,
-		Intents.FLAGS.GUILD_MESSAGES,
-		Intents.FLAGS.GUILD_VOICE_STATES,
-		Intents.FLAGS.GUILD_INTEGRATIONS,
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessageReactions,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.DirectMessages,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.GuildVoiceStates,
+		GatewayIntentBits.GuildIntegrations,
 	],
 });
 
@@ -304,11 +304,11 @@ async function updatePlaying(gqueue, cguild) {
 		gqueue.playing = false;
 	}
 
-	const musicButtons = new MessageActionRow();
+	const musicButtons = new ActionRowBuilder();
 
 	if (gqueue.playing == false) {
 		musicButtons.addComponents(
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId("sbmusicplay")
 				.setEmoji("<:play:983780501275951125>")
 				.setStyle("SUCCESS")
@@ -316,7 +316,7 @@ async function updatePlaying(gqueue, cguild) {
 		);
 	} else {
 		musicButtons.addComponents(
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId("sbmusicpause")
 				.setEmoji("<:pause:983780518942359662>")
 				.setStyle("DANGER")
@@ -325,7 +325,7 @@ async function updatePlaying(gqueue, cguild) {
 	}
 
 	musicButtons.addComponents(
-		new MessageButton()
+		new ButtonBuilder()
 			.setCustomId("sbmusicstop")
 			.setEmoji("<:stop:983784017855938631>")
 			.setStyle("DANGER")
@@ -333,7 +333,7 @@ async function updatePlaying(gqueue, cguild) {
 
 	if (gqueue.autoplay == false) {
 		musicButtons.addComponents(
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId("sbmusicautoplay")
 				.setEmoji("<:autoplay:983853105617715211>")
 				.setStyle("SECONDARY")
@@ -341,20 +341,20 @@ async function updatePlaying(gqueue, cguild) {
 		);
 	} else {
 		musicButtons.addComponents(
-			new MessageButton()
+			new ButtonBuilder()
 				.setCustomId("sbmusicautoplay")
 				.setEmoji("<:autoplay:983853105617715211>")
 				.setStyle("DANGER")
 		);
 	}
 
-	const musicButtons2 = new MessageActionRow().addComponents(
-		new MessageButton()
+	const musicButtons2 = new ActionRowBuilder().addComponents(
+		new ButtonBuilder()
 			.setCustomId("sbmusicprev")
 			.setEmoji("<:previoustrack:983780558196858931>")
 			.setStyle("SECONDARY")
 			.setDisabled(gqueue.played.length < 1),
-		new MessageButton()
+		new ButtonBuilder()
 			.setCustomId("sbmusicnext")
 			.setEmoji("<:nexttrack:983780548096950322>")
 			.setStyle("SECONDARY")
@@ -1356,7 +1356,7 @@ async function sendRaidChars(user, uid) {
 	let sendChars = [];
 	let userChars = await getCharsById(user.id);
 
-	let john = new MessageSelectMenu()
+	let john = new StringSelectMenuBuilder()
 		.setCustomId(`33-${uid}`)
 		.setPlaceholder("Nothing selected");
 
@@ -1375,7 +1375,7 @@ async function sendRaidChars(user, uid) {
 
 	john.setMinValues(1).setMaxValues(userChars.length);
 
-	const row = await new MessageActionRow().addComponents(john);
+	const row = await new ActionRowBuilder().addComponents(john);
 
 	dmcan.send({
 		content: "`PICK A CHARACTER FOR THE RAID`",
@@ -1712,7 +1712,7 @@ bot.on("ready", async () => {
 	const {
 		SlashCommandBuilder,
 		ContextMenuCommandBuilder,
-	} = require("@discordjs/builders");
+	} = require("discord.js");
 
 	emoguild = bot.guilds.cache.get(process.env.EMOJIID);
 	testguild = bot.guilds.cache.get(process.env.TESTID);
@@ -1795,9 +1795,11 @@ bot.on("ready", async () => {
 					.setName("raid")
 					.setDescription("the raid you are assembling")
 					.setRequired(true)
-					.addChoice("Terrace of Endless Spring", "TOES")
-					.addChoice("Heart of Fear", "HOF")
-					.addChoice("Mogu'shan Vaults", "MSV")
+					.addChoices(
+						{ name: "Terrace of Endless Spring", value: "TOES" },
+						{ name: "Heart of Fear", value: "HOF" },
+						{ name: "Mogu'shan Vaults", value: "MSV" }
+					)
 			)
 			.addStringOption((option) =>
 				option
@@ -1834,8 +1836,10 @@ bot.on("ready", async () => {
 					.setName("size")
 					.setDescription("10/25 man")
 					.setRequired(false)
-					.addChoice("10", "10m")
-					.addChoice("25", "25m")
+					.addChoices(
+						{ name: "10", value: "10m" },
+						{ name: "25", value: "25m" }
+					)
 			)
 			.addUserOption((option) =>
 				option
@@ -1927,23 +1931,25 @@ bot.on("ready", async () => {
 		let raidCategory = await guildt.channels.cache.find(
 			(channelt) =>
 				channelt.name.toLowerCase() == "smo-raid" &&
-				channelt.type == "GUILD_CATEGORY"
+				channelt.type == ChannelType.GuildCategory
 		);
 		if (!raidCategory) {
-			guildt.channels.create("SMO-RAID", {
-				type: "GUILD_CATEGORY",
+			guildt.channels.create({
+				name: "SMO-RAID",
+				type: ChannelType.GuildCategory,
 				position: 0,
 				permissionOverwrites: [
 					{
 						id: testguild.roles.everyone,
-						deny: [Permissions.FLAGS.VIEW_CHANNEL],
+						deny: [PermissionFlagsBits.ViewChannel],
 					},
 				],
 			});
 		}
 		let raidChannel = await guildt.channels.cache.find(
 			(channelt) =>
-				channelt.name.toLowerCase() == "raidy" && channelt.type == "GUILD_TEXT"
+				channelt.name.toLowerCase() == "raidy" &&
+				channelt.type == ChannelType.GuildText
 		);
 		if (raidChannel) {
 			raidRoomManager.addRoom(raidChannel);
@@ -2102,7 +2108,7 @@ bot.on("interactionCreate", async (interaction) => {
 		interaction.values.includes(char.character.toLowerCase())
 	);
 
-	let john = new MessageSelectMenu()
+	let john = new StringSelectMenuBuilder()
 		.setCustomId(`22-${interaction.user.id}`)
 		.setPlaceholder("Nothing selected");
 
@@ -2121,7 +2127,7 @@ bot.on("interactionCreate", async (interaction) => {
 
 	john.setMinValues(1).setMaxValues(1);
 
-	const row = await new MessageActionRow().addComponents(john);
+	const row = await new ActionRowBuilder().addComponents(john);
 
 	smoothie.send({
 		content: `\`SELECT A CHARACTER FROM:\` ${interaction.user}`,
@@ -2706,7 +2712,7 @@ bot.on("interactionCreate", async (interaction) => {
 				let search = await ytsr(filter1.url, options);
 				let searchUrls = search.items;
 
-				const urlTable = new MessageSelectMenu()
+				const urlTable = new StringSelectMenuBuilder()
 					.setCustomId("mbsongs")
 					.setMinValues(1)
 					.setPlaceholder("Select a song");
@@ -2726,7 +2732,7 @@ bot.on("interactionCreate", async (interaction) => {
 
 				urlTable.setMaxValues(urlTable.options.length);
 
-				const row = new MessageActionRow().addComponents(urlTable);
+				const row = new ActionRowBuilder().addComponents(urlTable);
 				let msg = await interaction.reply({
 					components: [row],
 					ephemeral: true,
@@ -3335,8 +3341,8 @@ bot.on("interactionCreate", async (interaction) => {
 				return;
 			}
 
-			const row = new MessageActionRow().addComponents(
-				new MessageButton()
+			const row = new ActionRowBuilder().addComponents(
+				new ButtonBuilder()
 					.setCustomId("raidsign")
 					.setLabel("Sign up")
 					.setStyle("PRIMARY")
@@ -4041,8 +4047,8 @@ bot.on("interactionCreate", async (interaction) => {
 	}
 });
 
-bot.on("interactionCreate", async (interaction) => {
-	if (!interaction.isCommand() && !interaction.isContextMenu()) return;
+bot.on(Events.InteractionCreate, async (interaction) => {
+	if (!interaction.isChatInputCommand()) return;
 
 	const command = interaction.client.commands.get(interaction.commandName);
 

@@ -1,13 +1,16 @@
 class RussianManager {
 	/**
-	 * @type {Map<string,boolean[]>}
+	 * @type {Map<string,boolean[] | undefined>}
 	 */
 	#serverMagazineMap = new Map();
 	/**
-	 * @type {Map<string,Map<string,number>>}
+	 * @type {Map<string,Map<string,number> | undefined>}
+	 * @returns {[string,number][]}
 	 */
 	#serverDeathMap = new Map();
-
+	async getKills(serverid) {
+		return Array.from(this.#serverDeathMap.get(serverid)?.entries() ?? []);
+	}
 	async pullTrigger(serverId, uid) {
 		if (!this.#serverDeathMap.has(serverId)) {
 			this.#serverDeathMap.set(serverId, new Map());
