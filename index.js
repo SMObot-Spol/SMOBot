@@ -86,49 +86,6 @@ class Song {
 	}
 }
 
-let tanks = [
-	"1-Protection",
-	"6-Blood",
-	"2-Protection",
-	"11-Feral Combat",
-	"10-Brewmaster",
-];
-let rdps = [
-	"3-Survival",
-	"3-Markmanship",
-	"3-Beast mastery",
-	"5-Shadow",
-	"7-Elemental",
-	"8-Frost",
-	"8-Fire",
-	"8-Arcane",
-	"9-Demonology",
-	"9-Destruction",
-	"9-Affliction",
-	"11-Balance",
-];
-let mdps = [
-	"1-Arms",
-	"1-Fury",
-	"2-Retribution",
-	"4-Assassination",
-	"4-Combat",
-	"4-Subtlety",
-	"6-Unholy",
-	"6-Frost",
-	"7-Enhancement",
-	"10-Windwalker",
-	"11-Feral Combat",
-];
-let heals = [
-	"2-Holy",
-	"5-Discipline",
-	"5-Holy",
-	"7-Restoration",
-	"10-Mistweaver",
-	"11-Restoration",
-];
-
 let classes = [
 	["Warrior", "<:warrior:938287643437977660>"],
 	["Paladin", "<:paladin:938287643379253318>"],
@@ -944,33 +901,6 @@ async function snapshotCreator(char, uid, snapBed) {
 		gear: gear,
 	};
 	return snapBed;
-}
-
-async function removeCharacter(char, uid) {
-	var finalMessage = "";
-	char = char.toLowerCase();
-	var charExist = await findChar(uid, char);
-
-	if (!charExist) {
-		finalMessage += `\`\`\`${crossmoji}POSTAVA: ${char.toUpperCase()} NIE JE ZAREGISTROVANA\`\`\``;
-		return finalMessage;
-	}
-
-	var queryString = `DELETE FROM \`toons\` WHERE \`CHARACTER\` = '${char.toLowerCase()}' AND \`DISCORDID\` = '${uid}';`;
-
-	let exe = await execute(queryString);
-
-	if (exe == "DBERROR") {
-		finalMessage += `\`\`\`${crossmoji}DATABASE ERROR\`\`\``;
-		return finalMessage;
-	}
-
-	allChars = allChars.filter(
-		(zachar) => !(zachar.character == char && zachar.discordid == uid)
-	);
-
-	finalMessage += `\`\`\`${checkmoji}POSTAVA: ${char.toUpperCase()} ODSTRANENA${checkmoji}\`\`\``;
-	return finalMessage;
 }
 
 function aGet(url) {
@@ -2919,43 +2849,6 @@ bot.on("interactionCreate", async (interaction) => {
 				ephemeral: false,
 			});
 		}
-	}
-
-	if (commandName === "removechar") {
-		let user = interaction.user.id;
-		let endMessage = "";
-		if (options.getString("character")) {
-			endMessage += await removeCharacter(options.getString("character"), user);
-		}
-		if (options.getString("character2")) {
-			endMessage += await removeCharacter(
-				options.getString("character2"),
-				user
-			);
-		}
-		if (options.getString("character3")) {
-			endMessage += await removeCharacter(
-				options.getString("character3"),
-				user
-			);
-		}
-		if (options.getString("character4")) {
-			endMessage += await removeCharacter(
-				options.getString("character4"),
-				user
-			);
-		}
-		if (options.getString("character5")) {
-			endMessage += await removeCharacter(
-				options.getString("character5"),
-				user
-			);
-		}
-
-		await interaction.reply({
-			content: endMessage,
-			ephemeral: true,
-		});
 	}
 
 	if (commandName === "update") {

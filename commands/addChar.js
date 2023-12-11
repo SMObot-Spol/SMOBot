@@ -30,7 +30,7 @@ data.addUserOption((o) =>
  */
 async function execute(interaction) {
 	if (
-		!interaction.options.getUser(optionKeys.uid) &&
+		interaction.options.getUser(optionKeys.uid) &&
 		interaction.user.id !== "319128664291672085"
 	) {
 		await interaction.reply({
@@ -57,11 +57,11 @@ async function execute(interaction) {
 		ephemeral: true,
 	});
 
-	let addBed = {
+	const addBed = {
 		title: "ADD Character",
 		description: `Your character add query returned :`,
 		color: 7419530,
-		timestamp: Date.now(),
+		timestamp: new Date().toISOString(),
 		footer: {
 			icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
 			text: "powered by SMObot",
@@ -73,14 +73,20 @@ async function execute(interaction) {
 		fields: [],
 	};
 
-	await addChar(options.getString(optionKeys.c).toLowerCase(), user, addBed);
+	await addChar(
+		options.getString(optionKeys.c).toLowerCase(),
+		user,
+		addBed,
+		interaction
+	);
 
 	for (let i = 2; i <= maxChars; i++) {
 		if (options.getString(`${optionKeys.c}${i}`)) {
 			await addChar(
 				options.getString(`${optionKeys.c}${i}`).toLowerCase(),
 				user,
-				addBed
+				addBed,
+				interaction
 			);
 		}
 	}
@@ -90,13 +96,20 @@ async function execute(interaction) {
 		ephemeral: true,
 	});
 }
-
-async function addChar(char, user, addBed) {
+/**
+ *
+ * @param {import("discord.js").CommandInteraction} interaction
+ */
+async function addChar(char, user, addBed, interaction) {
+	const guildmoji = interaction.client.guilds.cache.get(process.env.EMOJIID);
+	const checkmoji = guildmoji.emojis.cache.find(
+		(emoji) => emoji.name === "TIMEY"
+	);
+	const crossmoji = guildmoji.emojis.cache.find(
+		(emoji) => emoji.name === "TIMEX"
+	);
 	try {
-		await characterManager.addCharacter(
-			options.getString(optionKeys.c).toLowerCase(),
-			user
-		);
+		await characterManager.addCharacter(char.toLowerCase(), user);
 		addBed.fields.push({
 			name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
 			value: "\n**Postava bola**\n**pridaná**\n**do databáze**\n",

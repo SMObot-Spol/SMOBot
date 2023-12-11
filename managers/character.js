@@ -15,10 +15,11 @@ class CharacterManager {
 				["character", char],
 				["discordid", id],
 			]);
+			console.log("xres", x);
 
 			return x.length !== 0;
 		} catch (err) {
-			console.log("Database FINDCHAR" + err);
+			console.log("Database FINDCHAR: " + err);
 			throw err;
 		}
 	}
@@ -32,13 +33,14 @@ class CharacterManager {
 		try {
 			charData = await axios.get(toonUrl).then((res) => res.data);
 		} catch (error) {
-			throw "API_ERROR";
+			throw error;
 		}
+		console.log(charData);
 		try {
 			const gear = charData.equipment.reduce((agg, curr) => {
 				agg[curr.slot] = {
 					id: curr.id,
-					name: esc(curr.name),
+					name: curr.name.replaceAll(`'`, "'"),
 				};
 				return agg;
 			}, {});
@@ -57,7 +59,6 @@ class CharacterManager {
 	 *
 	 * @param {string} charName
 	 * @param {string} uid
-	 * @returns {Promise<import("discord.js").EmbedField>}
 	 * @throws {"DBERROR" | "CHAR_ALREADY_REGISTERED" |"API_ERROR" | "PARSE_ERROR"}
 	 */
 	async addCharacter(charName, uid) {
@@ -93,6 +94,8 @@ class CharacterManager {
 		var classSpecCombo1 = `${classID}-${classSpec1}`;
 		var classSpecCombo2 = `${classID}-${classSpec2}`;
 
+		const { heals, mdps, rdps, tanks } = require("../constants/classSpecs");
+
 		if (tanks.includes(classSpecCombo1) || tanks.includes(classSpecCombo2)) {
 			tank = true;
 		}
@@ -115,7 +118,7 @@ class CharacterManager {
 		// const queryString = mysql.createQuery(addQuery, queryParams);
 
 		try {
-			const chars = await dbManager.genericInsert(
+			const res = await dbManager.genericInsert(
 				"toons",
 				[
 					"discordid",
@@ -142,33 +145,40 @@ class CharacterManager {
 					],
 				]
 			);
-			this.allChars.push(...chars);
+			this.allChars.push(res);
+			return res;
+		} catch (error) {
+			throw error;
+		}
+	}
+	/**
+	 *
+	 * @param {string} charName
+	 * @param {string} uid
+	 * @throws {"DBERROR" | "CHAR_NOT_REGISTERED"}
+	 */
+	async removeCharacter(charName, uid) {
+		const char = charName.toLowerCase();
+
+		try {
+			if (!(await this.findChar(uid, char))) {
+				throw "CHAR_NOT_REGISTERED";
+			}
 		} catch (error) {
 			throw error;
 		}
 
-		// let exe = await execute(queryString, true);
-
-		// if (exe) {
-		// 	exe.forEach((row) => {
-		// 		allChars.push(row);
-		// 	});
-		// }
-
-		// if (exe == "DBERROR") {
-		// 	addBed.fields.push({
-		// 		name: `${crossmoji} ${char.toUpperCase()}\n`,
-		// 		value: "\n**DATABASE**\n**ERROR**\n",
-		// 		inline: true,
-		// 	});
-		// 	return addBed;
-		// }
-		// addBed.fields.push({
-		// 	name: `${checkmoji} ${char.toUpperCase()} ${checkmoji}\n`,
-		// 	value: "\n**Postava bola**\n**pridaná**\n**do databáze**\n",
-		// 	inline: true,
-		// });
-		// return addBed;
+		try {
+			await dbManager.genericDelete("toons", [
+				["CHARACTER", charName],
+				["DISCORDID", uid],
+			]);
+			this.allChars = this.allChars.filter(
+				(zachar) => !(zachar.character == char && zachar.discordid == uid)
+			);
+		} catch (error) {
+			throw error;
+		}
 	}
 }
 

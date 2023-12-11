@@ -8,8 +8,17 @@ class RussianManager {
 	 * @returns {[string,number][]}
 	 */
 	#serverDeathMap = new Map();
-	async getKills(serverid) {
-		return Array.from(this.#serverDeathMap.get(serverid)?.entries() ?? []);
+	async getKills(serverId) {
+		this.#pruneDead(serverId);
+		return Array.from(this.#serverDeathMap.get(serverId)?.entries() ?? []);
+	}
+	#pruneDead(serverId) {
+		if (!this.#serverDeathMap.has(serverId)) return;
+		this.#serverDeathMap.get(serverId).forEach((respawn, uid) => {
+			if (respawn <= Date.now()) {
+				this.#serverDeathMap.delete(uid);
+			}
+		});
 	}
 	async pullTrigger(serverId, uid) {
 		if (!this.#serverDeathMap.has(serverId)) {
