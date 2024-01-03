@@ -5009,6 +5009,11 @@ bot.on("messageCreate", async (sprava) => {
         sprava.channel.send({ files: [gif.images.fixed_height.url] });
     }
 
+    if (sprava.content.toLowerCase() == "🐵") {
+        let gif = await gifSearch("monkey");
+        sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    }
+
     if (sprava.content.toLowerCase() == "🐤") {
         let gif = await gifSearch("baby chick");
         sprava.channel.send({ files: [gif.images.fixed_height.url] });
