@@ -5008,6 +5008,11 @@ bot.on("messageCreate", async (sprava) => {
         let gif = await gifSearch("kitten");
         sprava.channel.send({ files: [gif.images.fixed_height.url] });
     }
+    
+    if (sprava.content.toLowerCase() == "🐇") {
+        let gif = await gifSearch("rabbit");
+        sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    }
 
     if (sprava.content.toLowerCase() == "🐵") {
         let gif = await gifSearch("monkey");
