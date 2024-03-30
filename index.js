@@ -389,15 +389,10 @@ async function updatePlaying(gqueue, cguild) {
 
 async function gifSearch(term) {
     Math.random();
-    let randomOffset = Math.floor(Math.random() * 2000);
-    const { data: gifs } = await gipi.search(term, {
-        type: "gifs",
-        limit: 25,
-        offset: randomOffset,
-    });
-    let responseIndex = Math.floor(Math.random() * 10 + 1) % gifs.length;
-    let gif = gifs[responseIndex];
-    return gif;
+    const res = await axios.get(
+        `https://api.giphy.com/v1/gifs/random?api_key=${process.env.GIPI}&tag=${term}&rating=g`
+    );
+    return res.data.data;
 }
 
 async function unholyPlay(sg) {
@@ -5008,7 +5003,7 @@ bot.on("messageCreate", async (sprava) => {
         let gif = await gifSearch("kitten");
         sprava.channel.send({ files: [gif.images.fixed_height.url] });
     }
-    
+
     if (sprava.content.toLowerCase() == "🐇") {
         let gif = await gifSearch("rabbit");
         sprava.channel.send({ files: [gif.images.fixed_height.url] });
