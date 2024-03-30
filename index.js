@@ -389,7 +389,7 @@ async function updatePlaying(gqueue, cguild) {
 
 async function gifSearch(term) {
     Math.random();
-    let randomOffset = Math.floor(Math.random() * 200);
+    let randomOffset = Math.floor(Math.random() * 4000);
     const { data: gifs } = await gipi.search(term, {
         type: "gifs",
         limit: 25,
