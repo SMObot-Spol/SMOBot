@@ -5050,7 +5050,7 @@ bot.on("messageCreate", async (sprava) => {
     }
 
     if (sprava.content.toLowerCase() == "🦊") {
-        let gif = await gifSearch("fox puppy");
+        let gif = await gifSearch("fox");
         sprava.channel.send({ files: [gif.images.fixed_height.url] });
     }
 
