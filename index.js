@@ -5148,6 +5148,9 @@ bot.on("messageCreate", async (sprava) => {
         sprava.reply({ embeds: [catBed] });
         // sprava.channel.send({ embeds: [catBed] });
     }
+    if (sprava.content == "!celo"){
+        sprava.channel.send('https://youtu.be/D87zEaLe77g').catch(console.error);
+    }
     if (sprava.content.includes("!randomdiss")) {
         const dissArray = [
             "https://i.ibb.co/k4Znr8g/DISSHORS.png",
