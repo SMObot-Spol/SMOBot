@@ -5080,10 +5080,10 @@ bot.on("messageCreate", async (sprava) => {
           text: "powered by SMObot",
         },
         image: {
-          url: 'https://i.ibb.co/QcmnNr2/lisak.gif',
+          url: 'https://i.ibb.co/4g1f8Fx/the-fox-and-the-sword-by-mcarspec-dd45nki-375w-2x.jpg',
         },
         author: {
-          name: "DISS Manager",
+          name: "PRAISE Manager",
           icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
         },
       };
