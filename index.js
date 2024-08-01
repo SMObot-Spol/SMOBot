@@ -4872,6 +4872,10 @@ bot.on("messageCreate", async (sprava) => {
     sprava.react("❤️");
   }
 
+  if (sprava.content.toLowerCase().includes("good smobot")) {
+    sprava.react("🥰");
+  }
+
   if (sprava.author.id == "978935848445808650") {
     let cntnt = sprava.content;
     if (cntnt.includes("break ")) {
