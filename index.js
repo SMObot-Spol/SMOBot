@@ -4841,7 +4841,7 @@ bot.on("interactionCreate", async (interaction) => {
               content: "@everyone",
               embeds: [raidBed],
               components: [linkButton],
-            }).catch(console.error);
+            }).catch(console.error)
           );
       }
 
