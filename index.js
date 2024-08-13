@@ -1471,7 +1471,7 @@ async function sendRaidChars(user, uid) {
   dmcan.send({
     content: "`PICK A CHARACTER FOR THE RAID`",
     components: [row],
-  });
+  }).catch(console.error);;
 
   if (collectorMap.has(user)) {
     if (collectorMap.get(user)) {
@@ -1494,7 +1494,7 @@ async function sendRaidChars(user, uid) {
 
     if (splitCollected.includes("DELETE")) {
       collector.stop();
-      await dmcan.send({ content: "Deleted." });
+      await dmcan.send({ content: "Deleted." }).catch(console.error);;
       return;
     }
   });
@@ -1642,9 +1642,9 @@ function getCharClass(char) {
     .get(toonUrl)
     .catch((error) => {
       if (error.message.includes("unescaped")) {
-        sprava.channel.send("```Nauč sa písať ty mongol.```");
+        sprava.channel.send("```Nauč sa písať ty mongol.```").catch(console.error);;
       } else if (error.message.includes("403")) {
-        sprava.channel.send("```Nepíš sem sračky plox.```");
+        sprava.channel.send("```Nepíš sem sračky plox.```").catch(console.error);;
       } else {
         console.log("unrelated error", error);
       }
@@ -1690,9 +1690,9 @@ async function getCharGear(char) {
     .get(toonUrl)
     .catch((error) => {
       if (error.message.includes("unescaped")) {
-        sprava.channel.send("```Nauč sa písať ty mongol.```");
+        sprava.channel.send("```Nauč sa písať ty mongol.```").catch(console.error);;
       } else if (error.message.includes("403")) {
-        sprava.channel.send("```Nepíš sem sračky plox.```");
+        sprava.channel.send("```Nepíš sem sračky plox.```").catch(console.error);;
       }
     })
     .then(async function (response) {
@@ -2565,7 +2565,7 @@ bot.on("interactionCreate", async (interaction) => {
   raidRoomId.forEach((raidRoomId) => {
     raidRoomId.edit({ content: "@everyone", embeds: [testBed] });
   });
-  await senderChannel.send({ embeds: [pickBed] });
+  await senderChannel.send({ embeds: [pickBed] }).catch(console.error);;
 });
 
 bot.on("interactionCreate", async (interaction) => {
@@ -2663,7 +2663,7 @@ bot.on("interactionCreate", async (interaction) => {
   smoothie.send({
     content: `\`SELECT A CHARACTER FROM:\` ${interaction.user}`,
     components: [row],
-  });
+  }).catch(console.error);;
 });
 
 bot.on("interactionCreate", async (interaction) => {
@@ -4351,7 +4351,7 @@ bot.on("interactionCreate", async (interaction) => {
 
         let message = await room.send({
           files: [{ name: "boi.png", attachment: buffer }],
-        });
+        }).catch(console.error);;
 
         interaction.reply({ content: "PUBLISHED", ephemeral: true });
 
@@ -4841,7 +4841,7 @@ bot.on("interactionCreate", async (interaction) => {
               content: "@everyone",
               embeds: [raidBed],
               components: [linkButton],
-            })
+            }).catch(console.error);
           );
       }
 
@@ -4892,81 +4892,81 @@ bot.on("messageCreate", async (sprava) => {
     sprava.content.toLowerCase() == "😦"
   ) {
     let gif = await gifSearch("puppy");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🍕") {
     let gif = await gifSearch("food");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🦦") {
     let gif = await gifSearch("otter");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🦭") {
     let gif = await gifSearch("seal");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🦌") {
     let gif = await gifSearch("deer");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🐱") {
     let gif = await gifSearch("kitten");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🍮") {
     let gif = await gifSearch("custard");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🐇") {
     let gif = await gifSearch("rabbit");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🐵") {
     let gif = await gifSearch("monkey");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🦉") {
     let gif = await gifSearch("owl");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🐿️") {
     let gif = await gifSearch("squirrel");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🐤") {
     let gif = await gifSearch("baby chick");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🐟") {
     let gif = await gifSearch("fish");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🦝") {
     let gif = await gifSearch("raccoon");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase() == "🦔") {
     let gif = await gifSearch("hedgehog");
-    sprava.channel.send({ files: [gif.images.fixed_height.url] });
+    sprava.channel.send({ files: [gif.images.fixed_height.url] }).catch(console.error);;
   }
 
   if (sprava.content.toLowerCase().includes("!gibtest")) {
-    let msg = await sprava.channel.send("REACT WITH CHECKMARK TO GET ROLE");
+    let msg = await sprava.channel.send("REACT WITH CHECKMARK TO GET ROLE").catch(console.error);;
     await msg.react("✅").catch(console.error);
     const filter = (reaction) => reaction.emoji.name === "✅";
     let collector = msg.createReactionCollector({ filter, time: 0 });
@@ -4994,7 +4994,7 @@ bot.on("messageCreate", async (sprava) => {
     } else {
       breakBed.description = `\`\`\`BREAK ENDED\`\`\``;
       await messageTime.edit({ embeds: [breakBed] });
-      messageTime.channel.send("@everyone");
+      messageTime.channel.send("@everyone").catch(console.error);;
       taskBreak.stop();
     }
   }
@@ -5019,7 +5019,7 @@ bot.on("messageCreate", async (sprava) => {
       fields: [],
     };
 
-    var messageTime = await sprava.channel.send({ embeds: [breakBed] });
+    var messageTime = await sprava.channel.send({ embeds: [breakBed] }).catch(console.error);;
 
     var taskBreak = await cron.schedule(
       "*/3 * * * * *",
@@ -5091,7 +5091,7 @@ bot.on("messageCreate", async (sprava) => {
           icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
         },
       };
-      sprava.channel.send({ embeds: [dissBed] });
+      sprava.channel.send({ embeds: [dissBed] }).catch(console.error);;
   }
   if (sprava.content.includes("!randomdiss")) {
     const dissArray = [
@@ -5116,7 +5116,7 @@ bot.on("messageCreate", async (sprava) => {
         icon_url: "https://i.ibb.co/vs7BpgP/ss.png",
       },
     };
-    sprava.channel.send({ embeds: [dissBed] });
+    sprava.channel.send({ embeds: [dissBed] }).catch(console.error);;
   }
 
   if (
